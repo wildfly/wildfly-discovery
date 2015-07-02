@@ -35,6 +35,8 @@ import org.wildfly.discovery.spi.DiscoveryResult;
  */
 public final class Discovery {
 
+    private static final URI END_MARK = URI.create("DUMMY:DUMMY");
+
     private final DiscoveryProvider[] providers;
 
     Discovery(final DiscoveryProvider... providers) {
@@ -68,7 +70,8 @@ public final class Discovery {
             public void await() throws InterruptedException {
                 while (next == null && count > 0) {
                     next = queue.take();
-                    if (next == null) {
+                    if (next == END_MARK) {
+                        next = null;
                         // sentinel value to indicate a provider completed
                         if (-- count == 0) {
                             return;
@@ -137,7 +140,7 @@ public final class Discovery {
 
         public void complete() {
             if (done.compareAndSet(false, true)) {
-                queue.add(null);
+                queue.add(END_MARK);
             }
         }
 

@@ -61,7 +61,7 @@ public final class StringAttributeValue extends AttributeValue implements Compar
     }
 
     void escapeTo(final StringBuilder builder) {
-        throw new IllegalStateException("Implement me");
+        FilterSpec.escapeTo(value, builder);
     }
 
     public int compareTo(final StringAttributeValue other) {

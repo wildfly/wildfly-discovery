@@ -66,22 +66,7 @@ public final class OpaqueAttributeValue extends AttributeValue implements Compar
         String toString = this.toString;
         if (toString == null) {
             final StringBuilder sb = new StringBuilder(bytes.length * 3 + 3);
-            sb.append("\\FF");
-            for (final byte b : bytes) {
-                int l = b & 0x0f;
-                int h = (b & 0xf0) >> 4;
-                sb.append('\\');
-                if (h < 10) {
-                    sb.append('0' + h);
-                } else {
-                    sb.append('A' + h - 10);
-                }
-                if (l < 10) {
-                    sb.append('0' + l);
-                } else {
-                    sb.append('A' + l - 10);
-                }
-            }
+            escapeTo(sb);
             toString = this.toString = sb.toString();
         }
         return toString;
@@ -93,8 +78,22 @@ public final class OpaqueAttributeValue extends AttributeValue implements Compar
     }
 
     void escapeTo(final StringBuilder builder) {
-        throw new IllegalStateException("Implement me");
-
+        builder.append("\\FF");
+        for (final byte b : bytes) {
+            int l = b & 0x0f;
+            int h = (b & 0xf0) >> 4;
+            builder.append('\\');
+            if (h < 10) {
+                builder.append('0' + h);
+            } else {
+                builder.append('A' + h - 10);
+            }
+            if (l < 10) {
+                builder.append('0' + l);
+            } else {
+                builder.append('A' + l - 10);
+            }
+        }
     }
 
     public int compareTo(final OpaqueAttributeValue o) {

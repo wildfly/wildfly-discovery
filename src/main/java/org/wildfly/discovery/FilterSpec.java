@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.wildfly.common.Assert;
+
 /**
  * A filter specification for matching attributes.
  *
@@ -79,6 +81,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec fromString(String string) {
+        Assert.checkNotNullParam("string", string);
         final StringIterator i = new StringIterator(string);
         final FilterSpec filterSpec = parseFilter(i);
         if (i.hasNext()) {
@@ -434,9 +437,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec all(FilterSpec... specs) {
-        if (specs == null) {
-            throw new IllegalArgumentException("specs is null");
-        }
+        Assert.checkNotNullParam("specs", specs);
         return new ListFilterSpec(true, specs.clone());
     }
 
@@ -447,9 +448,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec all(Collection<FilterSpec> specs) {
-        if (specs == null) {
-            throw new IllegalArgumentException("specs is null");
-        }
+        Assert.checkNotNullParam("specs", specs);
         return new ListFilterSpec(true, safeToArray(specs));
     }
 
@@ -460,9 +459,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec any(FilterSpec... specs) {
-        if (specs == null) {
-            throw new IllegalArgumentException("specs is null");
-        }
+        Assert.checkNotNullParam("specs", specs);
         return new ListFilterSpec(false, specs.clone());
     }
 
@@ -473,9 +470,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec any(Collection<FilterSpec> specs) {
-        if (specs == null) {
-            throw new IllegalArgumentException("specs is null");
-        }
+        Assert.checkNotNullParam("specs", specs);
         return new ListFilterSpec(false, safeToArray(specs));
     }
 
@@ -486,9 +481,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec not(FilterSpec spec) {
-        if (spec == null) {
-            throw new IllegalArgumentException("spec is null");
-        }
+        Assert.checkNotNullParam("spec", spec);
         return new NotFilterSpec(spec);
     }
 
@@ -500,12 +493,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec equal(String attribute, String value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new EqualsFilterSpec(attribute, AttributeValue.fromEncodedString(value));
     }
 
@@ -517,12 +506,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec equal(String attribute, byte[] value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new EqualsFilterSpec(attribute, AttributeValue.fromBytes(value));
     }
 
@@ -535,15 +520,9 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec substringMatch(final String attribute, final String initialPart, final String finalPart) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (initialPart == null) {
-            throw new IllegalArgumentException("initialPart is null");
-        }
-        if (finalPart == null) {
-            throw new IllegalArgumentException("finalPart is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("initialPart", initialPart);
+        Assert.checkNotNullParam("finalPart", finalPart);
         if (initialPart.isEmpty() && finalPart.isEmpty()) {
             return hasAttribute(attribute);
         }
@@ -558,12 +537,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec approx(String attribute, String value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new EqualsFilterSpec(attribute, AttributeValue.fromEncodedString(value));
     }
 
@@ -576,12 +551,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec greaterOrEqual(String attribute, String value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new GreaterEqualFilterSpec(attribute, AttributeValue.fromEncodedString(value));
     }
 
@@ -594,12 +565,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec greaterOrEqual(String attribute, byte[] value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new GreaterEqualFilterSpec(attribute, AttributeValue.fromBytes(value));
     }
 
@@ -612,12 +579,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec lessOrEqual(String attribute, String value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new LessEqualFilterSpec(attribute, AttributeValue.fromEncodedString(value));
     }
     /**
@@ -629,12 +592,8 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec lessOrEqual(String attribute, byte[] value) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("value is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
+        Assert.checkNotNullParam("value", value);
         return new LessEqualFilterSpec(attribute, AttributeValue.fromBytes(value));
     }
 
@@ -645,9 +604,7 @@ public abstract class FilterSpec implements Serializable {
      * @return the filter specification
      */
     public static FilterSpec hasAttribute(String attribute) {
-        if (attribute == null) {
-            throw new IllegalArgumentException("attribute is null");
-        }
+        Assert.checkNotNullParam("attribute", attribute);
         return new HasFilterSpec(attribute);
     }
 
@@ -658,11 +615,12 @@ public abstract class FilterSpec implements Serializable {
      * @return the escaped string
      */
     public static String escape(String str) {
+        Assert.checkNotNullParam("str", str);
         final int len = str.length();
         char ch;
         for (int i = 0; i < len; i ++) {
             ch = str.charAt(i);
-            if (ch == '*' || ch == '\\' || ch == '(' || ch == ')') {
+            if (ch == '*' || ch == '(' || ch == ')' || ch == '\\' || ch == 0 || ch == '|' || ch == '=' || ch == '<' || ch == '>' || ch == '~' || ch == '/' || ch == '&') {
                 final StringBuilder b = new StringBuilder(str.length() + str.length() >> 2);
                 escapeTo(str, b);
                 return b.toString();
@@ -678,11 +636,13 @@ public abstract class FilterSpec implements Serializable {
      * @param b the builder to append to
      */
     public static void escapeTo(String str, StringBuilder b) {
+        Assert.checkNotNullParam("str", str);
+        Assert.checkNotNullParam("b", b);
         final int len = str.length();
         char ch;
         for (int i = 0; i < len; i ++) {
             ch = str.charAt(i);
-            if (ch == '*' || ch == '(' || ch == ')' || ch == '\\' || ch == 0) {
+            if (ch == '*' || ch == '(' || ch == ')' || ch == '\\' || ch == 0 || ch == '|' || ch == '=' || ch == '<' || ch == '>' || ch == '~' || ch == '/' || ch == '&') {
                 b.append('\\');
                 int iv = ch >> 4;
                 b.append(iv < 10 ? '0' + iv : 'a' + iv - 10);

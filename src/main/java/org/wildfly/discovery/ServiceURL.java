@@ -233,6 +233,10 @@ public final class ServiceURL extends ServiceDesignation {
         return toServiceURI;
     }
 
+    public URI getLocationURI() throws URISyntaxException {
+        return uri;
+    }
+
     public ServiceType getServiceType() {
         return abstractType != null ? new ServiceType(abstractType, abstractTypeAuthority, uri.getScheme(), uriSchemeAuthority) : new ServiceType(uri.getScheme(), uriSchemeAuthority, null, null);
     }

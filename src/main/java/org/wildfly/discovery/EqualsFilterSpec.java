@@ -39,7 +39,7 @@ class EqualsFilterSpec extends FilterSpec {
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        final Collection<AttributeValue> collection = attributes.get(attributes);
+        final Collection<AttributeValue> collection = attributes.get(attribute);
         return collection != null && collection.contains(value);
     }
 

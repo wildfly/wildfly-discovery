@@ -50,7 +50,7 @@ public final class StaticDiscoveryProvider implements DiscoveryProvider {
             for (ServiceURL service : services) {
                 if (serviceType.implies(service) && (filterSpec == null || service.satisfies(filterSpec))) {
                     try {
-                        result.addMatch(service.toServiceURI());
+                        result.addMatch(service.getLocationURI());
                     } catch (URISyntaxException ignored) {
                         // ignored
                     }

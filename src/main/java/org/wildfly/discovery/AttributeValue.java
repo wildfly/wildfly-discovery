@@ -21,6 +21,8 @@ package org.wildfly.discovery;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
+import org.wildfly.common.Assert;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -39,6 +41,7 @@ public abstract class AttributeValue implements Serializable {
     public abstract String toString();
 
     public boolean isSameTypeAs(AttributeValue other) {
+        Assert.checkNotNullParam("other", other);
         return getClass() == other.getClass();
     }
 

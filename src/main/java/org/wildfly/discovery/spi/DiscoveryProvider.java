@@ -44,4 +44,14 @@ public interface DiscoveryProvider {
      * @param result the discovery result
      */
     DiscoveryRequest discover(ServiceType serviceType, FilterSpec filterSpec, DiscoveryResult result);
+
+    /**
+     * The empty discovery provider.
+     */
+    DiscoveryProvider EMPTY = new DiscoveryProvider() {
+        public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
+            result.complete();
+            return DiscoveryRequest.NULL;
+        }
+    };
 }

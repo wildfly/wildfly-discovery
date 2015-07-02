@@ -31,4 +31,12 @@
         <artifactId>jboss-parent</artifactId>
         <version>17</version>
     </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <version>1.0.0.Alpha2</version>
+        </dependency>
+    </dependencies>
 </project>
