@@ -233,7 +233,7 @@ public final class ServiceURL extends ServiceDesignation {
         return toServiceURI;
     }
 
-    public URI getLocationURI() throws URISyntaxException {
+    public URI getLocationURI() {
         return uri;
     }
 

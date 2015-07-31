@@ -18,7 +18,6 @@
 
 package org.wildfly.discovery.impl;
 
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.wildfly.discovery.FilterSpec;
@@ -45,15 +44,12 @@ public final class StaticDiscoveryProvider implements DiscoveryProvider {
         this.services = services;
     }
 
+    @Override
     public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
         try {
             for (ServiceURL service : services) {
                 if (serviceType.implies(service) && (filterSpec == null || service.satisfies(filterSpec))) {
-                    try {
-                        result.addMatch(service.getLocationURI());
-                    } catch (URISyntaxException ignored) {
-                        // ignored
-                    }
+                    result.addMatch(service.getLocationURI());
                 }
             }
             return DiscoveryRequest.NULL;
