@@ -19,6 +19,9 @@
 package org.wildfly.discovery;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import org.wildfly.common.Assert;
 
 /**
  * A queue for receiving service query answers.
@@ -34,6 +37,15 @@ public interface ServicesQueue extends AutoCloseable {
      * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
      */
     void await() throws InterruptedException;
+
+    /**
+     * Wait for a certain amount of time for a queue entry to become available.
+     *
+     * @param time the amount of time to wait
+     * @param unit the unit of time (must not be {@code null})
+     * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
+     */
+    void await(long time, TimeUnit unit) throws InterruptedException;
 
     /**
      * Query whether there is a value ready to be read.
@@ -70,4 +82,53 @@ public interface ServicesQueue extends AutoCloseable {
      * Cancel any in-progress discovery for this queue.  This method is idempotent.
      */
     void close();
+
+    /**
+     * Create a version of this queue which has an absolute timeout, relative to when this method is called.
+     *
+     * @param time the timeout time
+     * @param unit the timeout unit (must not be {@code null})
+     * @return the services queue with a timeout (not {@code null})
+     */
+    default ServicesQueue withTimeout(final long time, final TimeUnit unit) {
+        Assert.checkNotNullParam("unit", unit);
+        final long timeoutNanos = unit.toNanos(time);
+        final long start = System.nanoTime();
+        return new ServicesQueue() {
+
+            public void await() throws InterruptedException {
+                long elapsed = System.nanoTime() - start;
+                if (elapsed < timeoutNanos) {
+                    ServicesQueue.this.await(elapsed, TimeUnit.NANOSECONDS);
+                }
+            }
+
+            public void await(final long time, final TimeUnit unit) throws InterruptedException {
+                long elapsed = System.nanoTime() - start;
+                long callerNs = unit.toNanos(time);
+                ServicesQueue.this.await(Math.min(timeoutNanos - elapsed, callerNs), TimeUnit.NANOSECONDS);
+            }
+
+            public boolean isReady() {
+                return ServicesQueue.this.isReady();
+            }
+
+            public URI poll() {
+                return ServicesQueue.this.poll();
+            }
+
+            public URI take() throws InterruptedException {
+                await();
+                return poll();
+            }
+
+            public boolean isFinished() {
+                return ServicesQueue.this.isFinished() || timeoutNanos > System.nanoTime() - start;
+            }
+
+            public void close() {
+                ServicesQueue.this.close();
+            }
+        };
+    }
 }

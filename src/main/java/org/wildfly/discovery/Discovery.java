@@ -21,6 +21,7 @@ package org.wildfly.discovery;
 import java.net.URI;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.wildfly.discovery.spi.DiscoveryProvider;
@@ -70,6 +71,24 @@ public final class Discovery {
             public void await() throws InterruptedException {
                 while (next == null && count > 0) {
                     next = queue.take();
+                    if (next == END_MARK) {
+                        next = null;
+                        // sentinel value to indicate a provider completed
+                        if (-- count == 0) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            public void await(final long time, final TimeUnit unit) throws InterruptedException {
+                long remaining = unit.toNanos(time);
+                long mark = System.nanoTime();
+                long now;
+                while (next == null && count > 0 && remaining > 0L) {
+                    next = queue.poll(remaining, TimeUnit.NANOSECONDS);
+                    now = System.nanoTime();
+                    remaining -= Math.max(1L, now - mark);
                     if (next == END_MARK) {
                         next = null;
                         // sentinel value to indicate a provider completed
