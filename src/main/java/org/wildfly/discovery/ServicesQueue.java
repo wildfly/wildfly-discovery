@@ -123,7 +123,7 @@ public interface ServicesQueue extends AutoCloseable {
             }
 
             public boolean isFinished() {
-                return ServicesQueue.this.isFinished() || timeoutNanos > System.nanoTime() - start;
+                return ServicesQueue.this.isFinished() || ! isReady() && timeoutNanos > System.nanoTime() - start;
             }
 
             public void close() {
