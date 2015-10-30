@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
 import org.wildfly.common.Assert;
 
 /**
+ * A service attribute value.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class AttributeValue implements Serializable {
@@ -32,23 +34,63 @@ public abstract class AttributeValue implements Serializable {
     AttributeValue() {
     }
 
+    /**
+     * Get the hash code of this attribute value.  Attribute values are suitable for usage as hash table keys.
+     *
+     * @return the hash code
+     */
     public abstract int hashCode();
 
+    /**
+     * Determine whether this object is equal to the other.
+     *
+     * @param other the other object
+     * @return {@code true} if the objects are equal, {@code false} otherwise
+     */
     public abstract boolean equals(Object other);
 
+    /**
+     * Determine whether this object is equal to the other.
+     *
+     * @param other the other object
+     * @return {@code true} if the objects are equal, {@code false} otherwise
+     */
     public abstract boolean equals(AttributeValue other);
 
+    /**
+     * Get the string representation of this attribute value.
+     *
+     * @return the string representation of this attribute value (not {@code null})
+     */
     public abstract String toString();
 
+    /**
+     * Determine whether this attribute value has the same type as another.
+     *
+     * @param other the other attribute value (must not be {@code null})
+     * @return {@code true} if the other value is of the same type as this one, {@code false} otherwise
+     */
     public boolean isSameTypeAs(AttributeValue other) {
         Assert.checkNotNullParam("other", other);
         return getClass() == other.getClass();
     }
 
+    /**
+     * Compare this attribute value with another for sorting purposes.
+     *
+     * @param other the other value (must not be {@code null})
+     * @return a negative, zero, or positive value if this value comes before, is equal to, or comes after the given one
+     */
     public abstract int compareTo(AttributeValue other);
 
     private static final Pattern POSSIBLE_INTEGER = Pattern.compile("-?\\d{1,10}");
 
+    /**
+     * Get an attribute value from the given {@code int}.
+     *
+     * @param value the {@code int} value
+     * @return the attribute value
+     */
     public static IntegerAttributeValue fromInt(int value) {
         return new IntegerAttributeValue(value);
     }
