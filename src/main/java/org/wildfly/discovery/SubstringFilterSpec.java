@@ -37,22 +37,16 @@ final class SubstringFilterSpec extends FilterSpec {
     }
 
     public boolean matchesSimple(final Map<String, AttributeValue> attributes) {
-        final AttributeValue matchValue = attributes.get(attribute);
-        if (!(matchValue instanceof StringAttributeValue)) {
-            return false;
-        }
-        final String value = ((StringAttributeValue) matchValue).getValue();
+        final String value = attributes.get(attribute).toString();
         return value.startsWith(initialPart) && value.endsWith(finalPart);
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        final Collection<AttributeValue> collection = attributes.get(attributes);
+        final Collection<AttributeValue> collection = attributes.get(attribute);
         if (collection != null) for (AttributeValue matchValue : collection) {
-            if (matchValue instanceof StringAttributeValue) {
-                final String value = ((StringAttributeValue) matchValue).getValue();
-                if (value.startsWith(initialPart) && value.endsWith(finalPart)) {
-                    return true;
-                }
+            final String value = matchValue.toString();
+            if (value.startsWith(initialPart) && value.endsWith(finalPart)) {
+                return true;
             }
         }
         return false;

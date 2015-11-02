@@ -495,7 +495,7 @@ public abstract class FilterSpec implements Serializable {
     public static FilterSpec equal(String attribute, String value) {
         Assert.checkNotNullParam("attribute", attribute);
         Assert.checkNotNullParam("value", value);
-        return new EqualsFilterSpec(attribute, AttributeValue.fromEncodedString(value));
+        return new EqualsFilterSpec(attribute, AttributeValue.fromString(value));
     }
 
     /**
@@ -539,7 +539,7 @@ public abstract class FilterSpec implements Serializable {
     public static FilterSpec approx(String attribute, String value) {
         Assert.checkNotNullParam("attribute", attribute);
         Assert.checkNotNullParam("value", value);
-        return new EqualsFilterSpec(attribute, AttributeValue.fromEncodedString(value));
+        return new EqualsFilterSpec(attribute, AttributeValue.fromString(value));
     }
 
     /**
@@ -553,7 +553,7 @@ public abstract class FilterSpec implements Serializable {
     public static FilterSpec greaterOrEqual(String attribute, String value) {
         Assert.checkNotNullParam("attribute", attribute);
         Assert.checkNotNullParam("value", value);
-        return new GreaterEqualFilterSpec(attribute, AttributeValue.fromEncodedString(value));
+        return new GreaterEqualFilterSpec(attribute, AttributeValue.fromString(value));
     }
 
     /**
@@ -581,7 +581,7 @@ public abstract class FilterSpec implements Serializable {
     public static FilterSpec lessOrEqual(String attribute, String value) {
         Assert.checkNotNullParam("attribute", attribute);
         Assert.checkNotNullParam("value", value);
-        return new LessEqualFilterSpec(attribute, AttributeValue.fromEncodedString(value));
+        return new LessEqualFilterSpec(attribute, AttributeValue.fromString(value));
     }
     /**
      * Create a filter specification which matches when the given attribute's value is lexicographically less than or

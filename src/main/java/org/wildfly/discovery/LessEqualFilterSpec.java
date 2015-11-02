@@ -36,16 +36,14 @@ class LessEqualFilterSpec extends FilterSpec {
 
     public boolean matchesSimple(final Map<String, AttributeValue> attributes) {
         final AttributeValue other = attributes.get(attribute);
-        return value instanceof Comparable<?> && value.isSameTypeAs(other) && value.compareTo(other) <= 0;
+        return value.compareTo(other) <= 0;
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        if (value instanceof Comparable<?>) {
-            final Collection<AttributeValue> collection = attributes.get(attributes);
-            if (collection != null) for (AttributeValue value : collection) {
-                if (this.value.isSameTypeAs(value) && this.value.compareTo(value) <= 0) {
-                    return true;
-                }
+        final Collection<AttributeValue> collection = attributes.get(attributes);
+        if (collection != null) for (AttributeValue value : collection) {
+            if (this.value.compareTo(value) <= 0) {
+                return true;
             }
         }
         return false;
@@ -56,7 +54,7 @@ class LessEqualFilterSpec extends FilterSpec {
         FilterSpec.escapeTo(attribute, builder);
         builder.append('<');
         builder.append('=');
-        value.escapeTo(builder);
+        builder.append(value);
         builder.append(')');
     }
 }

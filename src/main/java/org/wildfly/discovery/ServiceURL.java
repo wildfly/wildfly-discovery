@@ -335,10 +335,10 @@ public final class ServiceURL extends ServiceDesignation {
                 Iterator<AttributeValue> iterator = entry.getValue().iterator();
                 if (iterator.hasNext()) {
                     b.append('=');
-                    iterator.next().escapeTo(b);
+                    b.append(iterator.next());
                     while (iterator.hasNext()) {
                         b.append(',');
-                        iterator.next().escapeTo(b);
+                        b.append(iterator.next());
                     }
                 }
             }

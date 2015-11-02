@@ -47,7 +47,7 @@ class EqualsFilterSpec extends FilterSpec {
         builder.append('(');
         FilterSpec.escapeTo(attribute, builder);
         builder.append('=');
-        value.escapeTo(builder);
+        builder.append(value);
         builder.append(')');
     }
 }
