@@ -35,8 +35,5 @@ public interface DiscoveryRequest {
     /**
      * The null discovery request; cancel requests are ignored.  Useful for implementing trivial discovery providers.
      */
-    DiscoveryRequest NULL = new DiscoveryRequest() {
-        public void cancel() {
-        }
-    };
+    DiscoveryRequest NULL = () -> {};
 }

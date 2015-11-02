@@ -48,10 +48,8 @@ public interface DiscoveryProvider {
     /**
      * The empty discovery provider.
      */
-    DiscoveryProvider EMPTY = new DiscoveryProvider() {
-        public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
-            result.complete();
-            return DiscoveryRequest.NULL;
-        }
+    DiscoveryProvider EMPTY = (serviceType, filterSpec, result) -> {
+        result.complete();
+        return DiscoveryRequest.NULL;
     };
 }
