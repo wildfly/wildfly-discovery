@@ -21,11 +21,15 @@ package org.wildfly.discovery.spi;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.wildfly.common.Assert;
+import org.wildfly.discovery.Discovery;
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
 
 /**
- * A discovery provider.  This interface is implemented by all discovery provider implementations.
+ * A blocking discovery provider.  This interface should be implemented by discovery providers which are not capable
+ * of running asynchronously.  The {@link #toDiscoveryProvider(Executor)} method must be used to convert providers of
+ * this type to a type which can be used in a {@link Discovery} instance.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -45,29 +49,35 @@ public interface BlockingDiscoveryProvider {
     void discover(ServiceType serviceType, FilterSpec filterSpec, DiscoveryResult result) throws InterruptedException;
 
     /**
-     * Convert this provider to a non-blocking provider which uses a shared, private thread pool to dispatch discovery
-     * requests.
+     * Convert this provider to a non-blocking provider which uses the given thread pool to dispatch discovery
+     * requests.  If the task is rejected by the executor, then discovery is immediately terminated.  The task thread
+     * is interrupted if discovery is to be cancelled.
      *
+     * @param executor the executor to use for task dispatch (must not be {@code null})
      * @return the provider (not {@code null})
      */
-    default DiscoveryProvider toDiscoveryProvider() {
+    default DiscoveryProvider toDiscoveryProvider(Executor executor) {
+        Assert.checkNotNullParam("executor", executor);
         return (serviceType, filterSpec, result) -> {
-            Executor executor = BlockingThreadPool.EXECUTOR;
             AtomicReference<Object> threadRef = new AtomicReference<>();
-            executor.execute(() -> {
-                try {
-                    final Thread currentThread = Thread.currentThread();
-                    if (threadRef.compareAndSet(null, currentThread)) try {
-                        BlockingDiscoveryProvider.this.discover(serviceType, filterSpec, result);
-                    } catch (InterruptedException e) {
-                        currentThread.interrupt();
+            try {
+                executor.execute(() -> {
+                    try {
+                        final Thread currentThread = Thread.currentThread();
+                        if (threadRef.compareAndSet(null, currentThread)) try {
+                            BlockingDiscoveryProvider.this.discover(serviceType, filterSpec, result);
+                        } catch (InterruptedException e) {
+                            currentThread.interrupt();
+                        } finally {
+                            threadRef.set(null);
+                        }
                     } finally {
-                        threadRef.set(null);
+                        result.complete();
                     }
-                } finally {
-                    result.complete();
-                }
-            });
+                });
+            } catch (Throwable t) {
+                result.complete();
+            }
             return () -> {
                 final Object val = threadRef.getAndSet("sentinel");
                 if (val instanceof Thread) {
