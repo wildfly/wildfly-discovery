@@ -143,16 +143,16 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         if (c == 0xff) {
             return K_OPAQUE;
         }
-        boolean found = true;
+
         if (c == '-' || c >= '0' && c <= '9') {
-            for (int i = 1; i < content.length; i ++) {
-                if (! (c >= '0' && c <= '9')) {
-                    found = false;
-                    break;
+            for (int i = 1; i < content.length; i++) {
+                if (!(c >= '0' && c <= '9')) {
+                    return K_STRING;
                 }
             }
+            return K_NUMERIC;
         }
-        if (found) return K_NUMERIC;
+
         return K_STRING;
     }
 
