@@ -196,6 +196,13 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         }
     }
 
+    public boolean equals(Object obj) {
+        if (!(obj instanceof AttributeValue)) {
+            return false;
+        }
+        return this.compareTo((AttributeValue) obj) == 0;
+    }
+
     private int compareArray(final byte[] c1, final byte[] c2) {
         int res;
         for (int i = 0; i < min(c1.length, c2.length); i ++) {
