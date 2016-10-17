@@ -24,6 +24,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.wildfly.common.Assert;
+import org.wildfly.discovery.impl.AggregateDiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryRequest;
 import org.wildfly.discovery.spi.DiscoveryResult;
@@ -36,12 +38,12 @@ import org.wildfly.discovery.spi.DiscoveryResult;
  */
 public final class Discovery {
 
-    private static final URI END_MARK = URI.create("DUMMY:DUMMY");
+    static final URI END_MARK = URI.create("DUMMY:DUMMY");
 
-    private final DiscoveryProvider[] providers;
+    private final DiscoveryProvider provider;
 
-    Discovery(final DiscoveryProvider... providers) {
-        this.providers = providers;
+    Discovery(final DiscoveryProvider provider) {
+        this.provider = provider;
     }
 
     /**
@@ -60,72 +62,7 @@ public final class Discovery {
             throw new IllegalArgumentException("serviceType is null");
         }
         final LinkedBlockingQueue<URI> queue = new LinkedBlockingQueue<>();
-        final DiscoveryRequest[] requests = new DiscoveryRequest[providers.length];
-        for (int i = 0; i < providers.length; i++) {
-            requests[i] = providers[i].discover(serviceType, filterSpec, new ListDiscoveryResult(queue));
-        }
-        return new ServicesQueue() {
-            private int count = providers.length;
-            private URI next;
-
-            public void await() throws InterruptedException {
-                while (next == null && count > 0) {
-                    next = queue.take();
-                    if (next == END_MARK) {
-                        next = null;
-                        // sentinel value to indicate a provider completed
-                        if (-- count == 0) {
-                            return;
-                        }
-                    }
-                }
-            }
-
-            public void await(final long time, final TimeUnit unit) throws InterruptedException {
-                long remaining = unit.toNanos(time);
-                long mark = System.nanoTime();
-                long now;
-                while (next == null && count > 0 && remaining > 0L) {
-                    next = queue.poll(remaining, TimeUnit.NANOSECONDS);
-                    now = System.nanoTime();
-                    remaining -= Math.max(1L, now - mark);
-                    if (next == END_MARK) {
-                        next = null;
-                        // sentinel value to indicate a provider completed
-                        if (-- count == 0) {
-                            return;
-                        }
-                    }
-                }
-            }
-
-            public boolean isReady() {
-                return next != null || count == 0;
-            }
-
-            public URI poll() {
-                try {
-                    return next;
-                } finally {
-                    next = null;
-                }
-            }
-
-            public URI take() throws InterruptedException {
-                await();
-                return poll();
-            }
-
-            public boolean isFinished() {
-                return next == null && count == 0;
-            }
-
-            public void close() {
-                if (! isFinished()) for (DiscoveryRequest request : requests) {
-                    request.cancel();
-                }
-            }
-        };
+        return new BlockingQueueServicesQueue(queue, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue)));
     }
 
     /**
@@ -136,24 +73,28 @@ public final class Discovery {
      * @return the discovery object
      */
     public static Discovery create(DiscoveryProvider... providers) {
-        if (providers == null) {
-            throw new IllegalArgumentException("providers is null");
-        }
+        Assert.checkNotNullParam("providers", providers);
         final DiscoveryProvider[] clone = providers.clone();
-        for (int i = 0; i < clone.length; i++) {
-            final DiscoveryProvider discoveryProvider = clone[i];
-            if (discoveryProvider == null) {
-                throw new IllegalArgumentException("providers[" + i + "] is null");
-            }
+        final int length = clone.length;
+        for (int i = 0; i < length; i++) {
+            Assert.checkNotNullArrayParam("providers", i, clone[i]);
         }
-        return new Discovery(clone);
+        if (clone.length == 0) {
+            return new Discovery(DiscoveryProvider.EMPTY);
+        } else if (clone.length == 1) {
+            return new Discovery(clone[0]);
+        } else {
+            return new Discovery(new AggregateDiscoveryProvider(clone));
+        }
     }
 
-    static final class ListDiscoveryResult implements DiscoveryResult {
+    // Internal classes
+
+    static final class BlockingQueueDiscoveryResult implements DiscoveryResult {
         private final AtomicBoolean done = new AtomicBoolean(false);
         private final BlockingQueue<URI> queue;
 
-        ListDiscoveryResult(final BlockingQueue<URI> queue) {
+        BlockingQueueDiscoveryResult(final BlockingQueue<URI> queue) {
             this.queue = queue;
         }
 
@@ -167,6 +108,75 @@ public final class Discovery {
             if (uri != null && ! done.get()) {
                 // if the queue is full, drop
                 queue.offer(uri);
+            }
+        }
+    }
+
+    static final class BlockingQueueServicesQueue implements ServicesQueue {
+        private final LinkedBlockingQueue<URI> queue;
+        private final DiscoveryRequest request;
+        private URI next;
+        private boolean done;
+
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<URI> queue, final DiscoveryRequest request) {
+            this.queue = queue;
+            this.request = request;
+        }
+
+        public void await() throws InterruptedException {
+            if (done) return;
+            while (next == null) {
+                next = queue.take();
+                if (next == END_MARK) {
+                    next = null;
+                    // sentinel value to indicate the provider completed
+                    done = true;
+                    return;
+                }
+            }
+        }
+
+        public void await(final long time, final TimeUnit unit) throws InterruptedException {
+            long remaining = unit.toNanos(time);
+            long mark = System.nanoTime();
+            long now;
+            while (next == null && ! done && remaining > 0L) {
+                next = queue.poll(remaining, TimeUnit.NANOSECONDS);
+                now = System.nanoTime();
+                remaining -= Math.max(1L, now - mark);
+                if (next == END_MARK) {
+                    next = null;
+                    // sentinel value to indicate the provider completed
+                    done = true;
+                    return;
+                }
+            }
+        }
+
+        public boolean isReady() {
+            return next != null || done;
+        }
+
+        public URI poll() {
+            try {
+                return next;
+            } finally {
+                next = null;
+            }
+        }
+
+        public URI take() throws InterruptedException {
+            await();
+            return poll();
+        }
+
+        public boolean isFinished() {
+            return next == null && done;
+        }
+
+        public void close() {
+            if (! isFinished()) {
+                request.cancel();
             }
         }
     }
