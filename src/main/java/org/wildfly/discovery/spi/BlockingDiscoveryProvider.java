@@ -38,8 +38,9 @@ public interface BlockingDiscoveryProvider {
     /**
      * Attempt to discover implementations of a service synchronously.  Matches must be written to the
      * {@link DiscoveryResult#addMatch(java.net.URI)} method on the {@code result} parameter as they are found.  The
-     * {@link DiscoveryResult#complete()} method must be called when the discovery process is complete or has timed out
-     * or failed for any other reason, otherwise discovery clients may hang indefinitely.
+     * {@link DiscoveryResult#complete()} method may be called when the discovery process is complete or has timed out
+     * or failed for any other reason.  If the {@code complete()} method is not called, the discovery is assumed to
+     * be complete when the method returns.
      *
      * @param serviceType the service type to match
      * @param filterSpec the service attribute filter expression, or {@code null} to return all matches
