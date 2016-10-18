@@ -58,9 +58,7 @@ public final class Discovery {
      * @return the services queue
      */
     public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec) {
-        if (serviceType == null) {
-            throw new IllegalArgumentException("serviceType is null");
-        }
+        Assert.checkNotNullParam("serviceType", serviceType);
         final LinkedBlockingQueue<URI> queue = new LinkedBlockingQueue<>();
         return new BlockingQueueServicesQueue(queue, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue)));
     }
@@ -69,7 +67,7 @@ public final class Discovery {
      * Create a discovery object with the given providers.  The given {@code providers} argument and its array
      * elements may not be {@code null}.
      *
-     * @param providers the discovery providers
+     * @param providers the discovery providers (must not be {@code null})
      * @return the discovery object
      */
     public static Discovery create(DiscoveryProvider... providers) {
@@ -86,6 +84,17 @@ public final class Discovery {
         } else {
             return new Discovery(new AggregateDiscoveryProvider(clone));
         }
+    }
+
+    /**
+     * Create a discovery object with the given single provider.  The given {@code provider} argument may not be {@code null}.
+     *
+     * @param provider the discovery provider (must not be {@code null})
+     * @return the discovery object
+     */
+    public static Discovery create(DiscoveryProvider provider) {
+        Assert.checkNotNullParam("provider", provider);
+        return new Discovery(provider);
     }
 
     // Internal classes
