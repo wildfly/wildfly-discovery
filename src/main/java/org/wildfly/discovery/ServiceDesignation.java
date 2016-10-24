@@ -43,6 +43,35 @@ public abstract class ServiceDesignation implements Serializable {
     }
 
     /**
+     * Get the abstract type, if any.
+     *
+     * @return the abstract type, or {@code null} if no abstract type is set (subclasses may restrict this)
+     */
+    public abstract String getAbstractType();
+
+    /**
+     * Get the abstract type authority of this service type.  Abstract types with no authority will return {@code null}
+     * for this value.
+     *
+     * @return the abstract type authority of this service type (may be {@code null})
+     */
+    public abstract String getAbstractTypeAuthority();
+
+    /**
+     * Get the concrete type name of this service type, if any.
+     *
+     * @return the concrete service type, or {@code null} if no abstract type is set (subclasses may restrict this)
+     */
+    public abstract String getUriScheme();
+
+    /**
+     * Get the concrete type authority name of this service type, if any.
+     *
+     * @return the concrete type authority name (may be {@code null})
+     */
+    public abstract String getUriSchemeAuthority();
+
+    /**
      * Determine whether the given service designation is implied by this service designation.
      *
      * @param other the other service designation
@@ -50,11 +79,33 @@ public abstract class ServiceDesignation implements Serializable {
      */
     public abstract boolean implies(ServiceDesignation other);
 
+    /**
+     * Determine if this service designation is equal to another.
+     *
+     * @param other the other service designation
+     * @return {@code true} if the service types are equal, {@code false} otherwise
+     */
     public abstract boolean equals(Object other);
 
+    /**
+     * Determine if this service designation is equal to another.
+     *
+     * @param other the other service designation
+     * @return {@code true} if the service types are equal, {@code false} otherwise
+     */
     public abstract boolean equals(ServiceDesignation other);
 
+    /**
+     * Get the hash code of this designation.
+     *
+     * @return the hash code of this designation
+     */
     public abstract int hashCode();
 
+    /**
+     * Get the simple string representation of this designation.
+     *
+     * @return the simple string representation of this designation (not {@code null})
+     */
     public abstract String toString();
 }

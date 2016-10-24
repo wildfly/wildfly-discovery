@@ -33,16 +33,16 @@ public final class ServiceType extends ServiceDesignation {
 
     private final String abstractType;
     private final String abstractTypeAuthority;
-    private final String urlScheme;
-    private final String urlSchemeAuthority;
+    private final String uriScheme;
+    private final String uriSchemeAuthority;
 
     private transient String toString;
 
-    ServiceType(final String abstractType, final String abstractTypeAuthority, final String urlScheme, final String urlSchemeAuthority) {
+    ServiceType(final String abstractType, final String abstractTypeAuthority, final String uriScheme, final String uriSchemeAuthority) {
         this.abstractType = abstractType;
         this.abstractTypeAuthority = abstractTypeAuthority;
-        this.urlScheme = urlScheme;
-        this.urlSchemeAuthority = urlSchemeAuthority;
+        this.uriScheme = uriScheme;
+        this.uriSchemeAuthority = uriSchemeAuthority;
     }
 
     public boolean implies(final ServiceDesignation other) {
@@ -67,7 +67,7 @@ public final class ServiceType extends ServiceDesignation {
         Assert.checkNotNullParam("serviceType", serviceType);
         return Objects.equals(abstractType, serviceType.abstractType)
             && Objects.equals(abstractTypeAuthority, serviceType.abstractTypeAuthority)
-            && (urlScheme == null || urlScheme.equals(serviceType.urlScheme) && Objects.equals(urlSchemeAuthority, serviceType.urlSchemeAuthority));
+            && (uriScheme == null || uriScheme.equals(serviceType.uriScheme) && Objects.equals(uriSchemeAuthority, serviceType.uriSchemeAuthority));
     }
 
     /**
@@ -80,7 +80,7 @@ public final class ServiceType extends ServiceDesignation {
      * @return {@code true} if the service URL is implied by this type, {@code false} otherwise
      */
     public boolean implies(final ServiceURL serviceURL) {
-        if (urlScheme == null) {
+        if (uriScheme == null) {
             if (serviceURL.getAbstractType() == null) {
                 return Objects.equals(abstractType, serviceURL.getUriScheme())
                     && Objects.equals(abstractTypeAuthority, serviceURL.getUriSchemeAuthority());
@@ -91,29 +91,29 @@ public final class ServiceType extends ServiceDesignation {
         } else {
             return Objects.equals(abstractType, serviceURL.getAbstractType())
                 && Objects.equals(abstractTypeAuthority, serviceURL.getAbstractTypeAuthority())
-                && Objects.equals(urlScheme, serviceURL.getUriScheme())
-                && Objects.equals(urlSchemeAuthority, serviceURL.getUriSchemeAuthority());
+                && Objects.equals(uriScheme, serviceURL.getUriScheme())
+                && Objects.equals(uriSchemeAuthority, serviceURL.getUriSchemeAuthority());
         }
     }
 
     /**
      * Determine if this service type is equal to another.
      *
-     * @param other the other service type (must not be {@code null})
+     * @param other the other service type
      * @return {@code true} if the service types are equal, {@code false} otherwise
      */
     public boolean equals(final ServiceType other) {
         return other != null
             && Objects.equals(abstractType, other.abstractType)
             && Objects.equals(abstractTypeAuthority, other.abstractTypeAuthority)
-            && Objects.equals(urlScheme, other.urlScheme)
-            && Objects.equals(urlSchemeAuthority, other.urlSchemeAuthority);
+            && Objects.equals(uriScheme, other.uriScheme)
+            && Objects.equals(uriSchemeAuthority, other.uriSchemeAuthority);
     }
 
     /**
      * Determine if this service type is equal to another.
      *
-     * @param other the other service type (must not be {@code null})
+     * @param other the other service type
      * @return {@code true} if the service types are equal, {@code false} otherwise
      */
     public boolean equals(final ServiceDesignation other) {
@@ -123,7 +123,7 @@ public final class ServiceType extends ServiceDesignation {
     /**
      * Determine if this service type is equal to another.
      *
-     * @param other the other service type (must not be {@code null})
+     * @param other the other service type
      * @return {@code true} if the service types are equal, {@code false} otherwise
      */
     public boolean equals(final Object other) {
@@ -152,10 +152,10 @@ public final class ServiceType extends ServiceDesignation {
             if (abstractTypeAuthority != null) {
                 b.append('.').append(abstractTypeAuthority);
             }
-            if (urlScheme != null) {
-                b.append(':').append(urlScheme);
-                if (urlSchemeAuthority != null) {
-                    b.append('.').append(urlSchemeAuthority);
+            if (uriScheme != null) {
+                b.append(':').append(uriScheme);
+                if (uriSchemeAuthority != null) {
+                    b.append('.').append(uriSchemeAuthority);
                 }
             }
             toString = this.toString = b.toString();
@@ -188,8 +188,8 @@ public final class ServiceType extends ServiceDesignation {
      *
      * @return the concrete service type (may be {@code null})
      */
-    public String getUrlScheme() {
-        return urlScheme;
+    public String getUriScheme() {
+        return uriScheme;
     }
 
     /**
@@ -197,8 +197,8 @@ public final class ServiceType extends ServiceDesignation {
      *
      * @return the concrete type authority name (may be {@code null})
      */
-    public String getUrlSchemeAuthority() {
-        return urlSchemeAuthority;
+    public String getUriSchemeAuthority() {
+        return uriSchemeAuthority;
     }
 
     /**
