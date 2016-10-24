@@ -21,6 +21,7 @@ package org.wildfly.discovery;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -198,12 +199,27 @@ public final class ServiceURL extends ServiceDesignation {
             final HashMap<String, List<AttributeValue>> map = new HashMap<>();
             List<AttributeValue> list;
             for (Attr attr : attributes) {
-                list = map.get(attr.name);
-                if (list == null) {
-                    map.put(attr.name, list = new ArrayList<AttributeValue>(attr.value == null ? 0 : 1));
-                }
-                if (attr.value != null) {
-                    list.add(attr.value);
+                map.compute(attr.name, (name, val) -> {
+                    if (val != null) {
+                        if (val.size() == 1) {
+                            List<AttributeValue> result = new ArrayList<>(val);
+                            result.add(attr.value);
+                            return result;
+                        } else {
+                            val.add(attr.value);
+                            return val;
+                        }
+                    } else {
+                        return Collections.singletonList(attr.value);
+                    }
+                });
+            }
+            // ensure that every list here is unmodifiable so we can return them directly to the user
+            for (Map.Entry<String, List<AttributeValue>> entry : map.entrySet()) {
+                final List<AttributeValue> value = entry.getValue();
+                if (value.size() > 1) {
+                    ((ArrayList<AttributeValue>) value).trimToSize();
+                    entry.setValue(Collections.unmodifiableList(value));
                 }
             }
             return new ServiceURL(this, map);
@@ -461,5 +477,66 @@ public final class ServiceURL extends ServiceDesignation {
      */
     public String getPath() {
         return uri.getPath();
+    }
+
+    /**
+     * Get the first attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the first attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getFirstAttributeValue(String name) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * Get the first attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @param defaultValue the value to return if no such attribute exists
+     * @return the first attribute value for the given name, or {@code defaultValue} if no such attribute exists
+     */
+    public AttributeValue getFirstAttributeValue(String name, AttributeValue defaultValue) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? defaultValue : list.get(0);
+    }
+
+    /**
+     * Get the last attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the last attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getLastAttributeValue(String name) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? null : list.get(list.size() - 1);
+    }
+
+    /**
+     * Get the last attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @param defaultValue the value to return if no such attribute exists
+     * @return the last attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getLastAttributeValue(String name, AttributeValue defaultValue) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? defaultValue : list.get(list.size() - 1);
+    }
+
+    /**
+     * Get the values of the attribute with the given name.  If no such attribute exists, an empty list is returned.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the values of the attribute with the given name (not {@code null})
+     */
+    public List<AttributeValue> getAttributeValues(String name) {
+        Assert.checkNotNullParam("name", name);
+        return attributes.getOrDefault(name, Collections.emptyList());
     }
 }
