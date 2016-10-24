@@ -88,9 +88,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the abstract type.
          *
          * @param abstractType the abstract type
+         * @return this builder
          */
-        public void setAbstractType(final String abstractType) {
+        public Builder setAbstractType(final String abstractType) {
             this.abstractType = abstractType;
+            return this;
         }
 
         /**
@@ -106,9 +108,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the abstract authority.
          *
          * @param abstractTypeAuthority the abstract authority
+         * @return this builder
          */
-        public void setAbstractTypeAuthority(final String abstractTypeAuthority) {
+        public Builder setAbstractTypeAuthority(final String abstractTypeAuthority) {
             this.abstractTypeAuthority = abstractTypeAuthority;
+            return this;
         }
 
         /**
@@ -124,8 +128,9 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the concrete URI.
          *
          * @param uri the concrete URI (must not be {@code null})
+         * @return this builder
          */
-        public void setUri(final URI uri) {
+        public Builder setUri(final URI uri) {
             Assert.checkNotNullParam("uri", uri);
             if (uri.getFragment() != null) {
                 throw new IllegalArgumentException("Service URIs may not have a fragment");
@@ -134,6 +139,7 @@ public final class ServiceURL extends ServiceDesignation {
                 throw new IllegalArgumentException("Service URIs must be absolute");
             }
             this.uri = uri;
+            return this;
         }
 
         /**
@@ -149,9 +155,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the URI scheme authority.
          *
          * @param uriSchemeAuthority the URI scheme authority
+         * @return this builder
          */
-        public void setUriSchemeAuthority(final String uriSchemeAuthority) {
+        public Builder setUriSchemeAuthority(final String uriSchemeAuthority) {
             this.uriSchemeAuthority = uriSchemeAuthority;
+            return this;
         }
 
         /**
@@ -159,21 +167,25 @@ public final class ServiceURL extends ServiceDesignation {
          *
          * @param name the attribute name (must not be {@code null})
          * @param value the attribute value (must not be {@code null})
+         * @return this builder
          */
-        public void addAttribute(final String name, final AttributeValue value) {
+        public Builder addAttribute(final String name, final AttributeValue value) {
             Assert.checkNotNullParam("name", name);
             Assert.checkNotNullParam("value", value);
             attributes.add(new Attr(name, value));
+            return this;
         }
 
         /**
          * Add a valueless attribute.
          *
          * @param name the attribute name (must not be {@code null})
+         * @return this builder
          */
-        public void addAttribute(final String name) {
+        public Builder addAttribute(final String name) {
             Assert.checkNotNullParam("name", name);
             attributes.add(new Attr(name, null));
+            return this;
         }
 
         /**
