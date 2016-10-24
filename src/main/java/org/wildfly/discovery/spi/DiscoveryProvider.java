@@ -20,6 +20,7 @@ package org.wildfly.discovery.spi;
 
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
+import org.wildfly.discovery.ServiceURL;
 
 /**
  * A discovery provider.  This interface is implemented by all discovery provider implementations.
@@ -30,7 +31,7 @@ public interface DiscoveryProvider {
 
     /**
      * Attempt to discover implementations of a service.  Matches must be written to the
-     * {@link DiscoveryResult#addMatch(java.net.URI)} method on the {@code result} parameter as they are found.  The
+     * {@link DiscoveryResult#addMatch(ServiceURL)} method on the {@code result} parameter as they are found.  The
      * {@link DiscoveryResult#complete()} method must be called when the discovery process is complete or has timed out
      * or failed for any other reason, otherwise discovery clients may hang indefinitely.
      * <p>

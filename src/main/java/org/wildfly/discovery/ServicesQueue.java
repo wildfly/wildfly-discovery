@@ -55,21 +55,45 @@ public interface ServicesQueue extends AutoCloseable {
     boolean isReady();
 
     /**
-     * Get the next entry from the queue without blocking.  Returns {@code null} if there is no entry ready, or if
+     * Get the location URI of the next entry from the queue without blocking.  Returns {@code null} if there is no entry ready, or if
      * the queue is finished (all services have been read).  Use {@link #isFinished()} to distinguish the cases.
      *
      * @return the next URI, or {@code null} if the queue is not ready or is finished
      */
-    URI poll();
+    default URI poll() {
+        final ServiceURL serviceURL = pollService();
+        return serviceURL == null ? null : serviceURL.getLocationURI();
+    }
 
     /**
-     * Get the next entry from the queue, blocking until one is available or the thread is interrupted.  Returns
+     * Get the location URI of the next entry from the queue, blocking until one is available or the thread is
+     * interrupted.  Returns
      * {@code null} if the queue is finished (all services have been read).
      *
      * @return the next URI, or {@code null} if the queue is finished
      * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
      */
-    URI take() throws InterruptedException;
+    default URI take() throws InterruptedException {
+        final ServiceURL serviceURL = takeService();
+        return serviceURL == null ? null : serviceURL.getLocationURI();
+    }
+
+    /**
+     * Get the next entry from the queue without blocking.  Returns {@code null} if there is no entry ready, or if
+     * the queue is finished (all services have been read).  Use {@link #isFinished()} to distinguish the cases.
+     *
+     * @return the next service URL, or {@code null} if the queue is not ready or is finished
+     */
+    ServiceURL pollService();
+
+    /**
+     * Get the next entry from the queue, blocking until one is available or the thread is interrupted.  Returns
+     * {@code null} if the queue is finished (all services have been read).
+     *
+     * @return the next service URL, or {@code null} if the queue is finished
+     * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
+     */
+    ServiceURL takeService() throws InterruptedException;
 
     /**
      * Query whether this queue is finished (all services have been read).
@@ -120,6 +144,15 @@ public interface ServicesQueue extends AutoCloseable {
             public URI take() throws InterruptedException {
                 await();
                 return poll();
+            }
+
+            public ServiceURL pollService() {
+                return ServicesQueue.this.pollService();
+            }
+
+            public ServiceURL takeService() throws InterruptedException {
+                await();
+                return pollService();
             }
 
             public boolean isFinished() {

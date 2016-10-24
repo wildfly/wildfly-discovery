@@ -25,6 +25,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.discovery.Discovery;
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
+import org.wildfly.discovery.ServiceURL;
 
 /**
  * A blocking discovery provider.  This interface should be implemented by discovery providers which are not capable
@@ -37,7 +38,7 @@ public interface BlockingDiscoveryProvider {
 
     /**
      * Attempt to discover implementations of a service synchronously.  Matches must be written to the
-     * {@link DiscoveryResult#addMatch(java.net.URI)} method on the {@code result} parameter as they are found.  The
+     * {@link DiscoveryResult#addMatch(ServiceURL)} method on the {@code result} parameter as they are found.  The
      * {@link DiscoveryResult#complete()} method may be called when the discovery process is complete or has timed out
      * or failed for any other reason.  If the {@code complete()} method is not called, the discovery is assumed to
      * be complete when the method returns.
