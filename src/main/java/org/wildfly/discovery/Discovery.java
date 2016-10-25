@@ -38,7 +38,7 @@ import org.wildfly.discovery.spi.DiscoveryResult;
  */
 public final class Discovery {
 
-    static final URI END_MARK = URI.create("DUMMY:DUMMY");
+    static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
 
     private final DiscoveryProvider provider;
 
@@ -59,7 +59,7 @@ public final class Discovery {
      */
     public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec) {
         Assert.checkNotNullParam("serviceType", serviceType);
-        final LinkedBlockingQueue<URI> queue = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
         return new BlockingQueueServicesQueue(queue, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue)));
     }
 
@@ -101,9 +101,9 @@ public final class Discovery {
 
     static final class BlockingQueueDiscoveryResult implements DiscoveryResult {
         private final AtomicBoolean done = new AtomicBoolean(false);
-        private final BlockingQueue<URI> queue;
+        private final BlockingQueue<ServiceURL> queue;
 
-        BlockingQueueDiscoveryResult(final BlockingQueue<URI> queue) {
+        BlockingQueueDiscoveryResult(final BlockingQueue<ServiceURL> queue) {
             this.queue = queue;
         }
 
@@ -113,21 +113,21 @@ public final class Discovery {
             }
         }
 
-        public void addMatch(final URI uri) {
-            if (uri != null && ! done.get()) {
+        public void addMatch(final ServiceURL serviceURL) {
+            if (serviceURL != null && ! done.get()) {
                 // if the queue is full, drop
-                queue.offer(uri);
+                queue.offer(serviceURL);
             }
         }
     }
 
     static final class BlockingQueueServicesQueue implements ServicesQueue {
-        private final LinkedBlockingQueue<URI> queue;
+        private final LinkedBlockingQueue<ServiceURL> queue;
         private final DiscoveryRequest request;
-        private URI next;
+        private ServiceURL next;
         private boolean done;
 
-        BlockingQueueServicesQueue(final LinkedBlockingQueue<URI> queue, final DiscoveryRequest request) {
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final DiscoveryRequest request) {
             this.queue = queue;
             this.request = request;
         }
@@ -166,7 +166,7 @@ public final class Discovery {
             return next != null || done;
         }
 
-        public URI poll() {
+        public ServiceURL pollService() {
             try {
                 return next;
             } finally {
@@ -174,9 +174,9 @@ public final class Discovery {
             }
         }
 
-        public URI take() throws InterruptedException {
+        public ServiceURL takeService() throws InterruptedException {
             await();
-            return poll();
+            return pollService();
         }
 
         public boolean isFinished() {

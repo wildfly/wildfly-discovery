@@ -29,6 +29,8 @@ import java.util.Arrays;
 import org.wildfly.common.Assert;
 
 /**
+ * An attribute value describing some aspect of a service.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class AttributeValue implements Comparable<AttributeValue>, Serializable {
@@ -59,12 +61,20 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         }
         this.toString = toString;
     }
-    
+
     private AttributeValue(final String string, final int kind) {
         this(string.getBytes(StandardCharsets.UTF_8), string, kind);
     }
 
+    /**
+     * Create an attribute value from a string.  The collation rules of values depend on the content as per the rules
+     * in <a href="https://tools.ietf.org/html/rfc2608#section-5">RFC 2608 §5</a>.
+     *
+     * @param string the attribute value string (must not be {@code null})
+     * @return the attribute value object
+     */
     public static AttributeValue fromString(String string) {
+        Assert.checkNotNullParam("string", string);
         // short circuit checks
         switch (string) {
             case "true": return TRUE;
@@ -118,7 +128,14 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         return fromClonedBytes(baos.toByteArray());
     }
 
+    /**
+     * Create an attribute value from a byte sequence.
+     *
+     * @param bytes the bytes to read (must not be {@code null})
+     * @return the attribute value object
+     */
     public static AttributeValue fromBytes(byte[] bytes) {
+        Assert.checkNotNullParam("bytes", bytes);
         return fromClonedBytes(bytes.clone());
     }
 
@@ -156,24 +173,50 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         return K_STRING;
     }
 
+    /**
+     * Determine if this value is a boolean value.
+     *
+     * @return {@code true} if the value is a boolean, {@code false} otherwise
+     */
     public boolean isBoolean() {
         final int kind = this.kind;
         return kind == K_BOOLEAN_TRUE || kind == K_BOOLEAN_FALSE;
     }
 
+    /**
+     * Determine if this value is numeric.
+     *
+     * @return {@code true} if the value is numeric, {@code false} otherwise
+     */
     public boolean isNumeric() {
         return kind == K_NUMERIC;
     }
 
+    /**
+     * Determine if this value is opaque (binary).
+     *
+     * @return {@code true} if the value is opaque, {@code false} otherwise
+     */
     public boolean isOpaque() {
         return kind == K_OPAQUE;
     }
 
+    /**
+     * Determine if this value is a text string.
+     *
+     * @return {@code true} if the value is a string, {@code false} otherwise
+     */
     public boolean isString() {
         return kind == K_STRING;
     }
 
-    public int asInt() {
+    /**
+     * Get the value as an integer, throwing an exception if it is not numeric.
+     *
+     * @return the integer value
+     * @throws IllegalArgumentException if the value is not numeric
+     */
+    public int asInt() throws IllegalArgumentException {
         if (kind == K_NUMERIC) {
             return asInt;
         } else {
@@ -181,6 +224,12 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         }
     }
 
+    /**
+     * Compare this value to another.
+     *
+     * @param other the other value
+     * @return -1, 0, or 1 if the value comes before, is the same as, or comes after the given value
+     */
     public int compareTo(final AttributeValue other) {
         Assert.checkNotNullParam("other", other);
         int res = signum(other.kind - kind);
@@ -196,11 +245,14 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         }
     }
 
+    /**
+     * Determine if this attribute value is equal to another.
+     *
+     * @param obj the other object
+     * @return {@code true} if the objects are equal, {@code false} otherwise
+     */
     public boolean equals(Object obj) {
-        if (!(obj instanceof AttributeValue)) {
-            return false;
-        }
-        return this.compareTo((AttributeValue) obj) == 0;
+        return obj instanceof AttributeValue && this.compareTo((AttributeValue) obj) == 0;
     }
 
     private int compareArray(final byte[] c1, final byte[] c2) {
@@ -212,6 +264,11 @@ public final class AttributeValue implements Comparable<AttributeValue>, Seriali
         return signum(c1.length - c2.length);
     }
 
+    /**
+     * Get a string representation of this attribute value.
+     *
+     * @return the string (not {@code null})
+     */
     public String toString() {
         final String toString = this.toString;
         if (toString == null) {

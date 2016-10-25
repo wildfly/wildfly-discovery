@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
+import org.wildfly.discovery.ServiceURL;
 import org.wildfly.discovery.spi.DiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryRequest;
 import org.wildfly.discovery.spi.DiscoveryResult;
@@ -100,6 +101,10 @@ public final class AggregateDiscoveryProvider implements DiscoveryProvider {
 
         public void addMatch(final URI uri) {
             if (! get()) delegate.addMatch(uri);
+        }
+
+        public void addMatch(final ServiceURL serviceURL) {
+            if (! get()) delegate.addMatch(serviceURL);
         }
     }
 }

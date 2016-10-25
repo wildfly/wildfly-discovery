@@ -20,6 +20,8 @@ package org.wildfly.discovery.spi;
 
 import java.net.URI;
 
+import org.wildfly.discovery.ServiceURL;
+
 /**
  * The discovery result.  Instances of this class must be safe for use from multiple threads concurrently.
  *
@@ -28,15 +30,25 @@ import java.net.URI;
 public interface DiscoveryResult {
 
     /**
-     * Indicate that discovery is complete.  Once this method is called, all additional calls to {@link #addMatch(URI)}
+     * Indicate that discovery is complete.  Once this method is called, all additional calls to {@link #addMatch(ServiceURL)}
      * will be ignored.
      */
     void complete();
 
     /**
-     * Indicate that a matching URI was discovered.
+     * Indicate that a matching URI was discovered.  A service URL with no abstract type or type authorities and no
+     * attributes is created for the service URI.
      *
      * @param uri the discovered URI
      */
-    void addMatch(URI uri);
+    default void addMatch(URI uri) {
+        addMatch(new ServiceURL.Builder().setUri(uri).create());
+    }
+
+    /**
+     * Indicate that a matching service URL was discovered.
+     *
+     * @param serviceURL the discovered service URL
+     */
+    void addMatch(ServiceURL serviceURL);
 }

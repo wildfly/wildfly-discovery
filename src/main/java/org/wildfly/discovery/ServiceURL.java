@@ -21,6 +21,7 @@ package org.wildfly.discovery;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -88,9 +89,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the abstract type.
          *
          * @param abstractType the abstract type
+         * @return this builder
          */
-        public void setAbstractType(final String abstractType) {
+        public Builder setAbstractType(final String abstractType) {
             this.abstractType = abstractType;
+            return this;
         }
 
         /**
@@ -106,9 +109,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the abstract authority.
          *
          * @param abstractTypeAuthority the abstract authority
+         * @return this builder
          */
-        public void setAbstractTypeAuthority(final String abstractTypeAuthority) {
+        public Builder setAbstractTypeAuthority(final String abstractTypeAuthority) {
             this.abstractTypeAuthority = abstractTypeAuthority;
+            return this;
         }
 
         /**
@@ -124,8 +129,9 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the concrete URI.
          *
          * @param uri the concrete URI (must not be {@code null})
+         * @return this builder
          */
-        public void setUri(final URI uri) {
+        public Builder setUri(final URI uri) {
             Assert.checkNotNullParam("uri", uri);
             if (uri.getFragment() != null) {
                 throw new IllegalArgumentException("Service URIs may not have a fragment");
@@ -134,6 +140,7 @@ public final class ServiceURL extends ServiceDesignation {
                 throw new IllegalArgumentException("Service URIs must be absolute");
             }
             this.uri = uri;
+            return this;
         }
 
         /**
@@ -149,9 +156,11 @@ public final class ServiceURL extends ServiceDesignation {
          * Set the URI scheme authority.
          *
          * @param uriSchemeAuthority the URI scheme authority
+         * @return this builder
          */
-        public void setUriSchemeAuthority(final String uriSchemeAuthority) {
+        public Builder setUriSchemeAuthority(final String uriSchemeAuthority) {
             this.uriSchemeAuthority = uriSchemeAuthority;
+            return this;
         }
 
         /**
@@ -159,21 +168,25 @@ public final class ServiceURL extends ServiceDesignation {
          *
          * @param name the attribute name (must not be {@code null})
          * @param value the attribute value (must not be {@code null})
+         * @return this builder
          */
-        public void addAttribute(final String name, final AttributeValue value) {
+        public Builder addAttribute(final String name, final AttributeValue value) {
             Assert.checkNotNullParam("name", name);
             Assert.checkNotNullParam("value", value);
             attributes.add(new Attr(name, value));
+            return this;
         }
 
         /**
          * Add a valueless attribute.
          *
          * @param name the attribute name (must not be {@code null})
+         * @return this builder
          */
-        public void addAttribute(final String name) {
+        public Builder addAttribute(final String name) {
             Assert.checkNotNullParam("name", name);
             attributes.add(new Attr(name, null));
+            return this;
         }
 
         /**
@@ -186,12 +199,27 @@ public final class ServiceURL extends ServiceDesignation {
             final HashMap<String, List<AttributeValue>> map = new HashMap<>();
             List<AttributeValue> list;
             for (Attr attr : attributes) {
-                list = map.get(attr.name);
-                if (list == null) {
-                    map.put(attr.name, list = new ArrayList<AttributeValue>(attr.value == null ? 0 : 1));
-                }
-                if (attr.value != null) {
-                    list.add(attr.value);
+                map.compute(attr.name, (name, val) -> {
+                    if (val != null) {
+                        if (val.size() == 1) {
+                            List<AttributeValue> result = new ArrayList<>(val);
+                            result.add(attr.value);
+                            return result;
+                        } else {
+                            val.add(attr.value);
+                            return val;
+                        }
+                    } else {
+                        return Collections.singletonList(attr.value);
+                    }
+                });
+            }
+            // ensure that every list here is unmodifiable so we can return them directly to the user
+            for (Map.Entry<String, List<AttributeValue>> entry : map.entrySet()) {
+                final List<AttributeValue> value = entry.getValue();
+                if (value.size() > 1) {
+                    ((ArrayList<AttributeValue>) value).trimToSize();
+                    entry.setValue(Collections.unmodifiableList(value));
                 }
             }
             return new ServiceURL(this, map);
@@ -449,5 +477,66 @@ public final class ServiceURL extends ServiceDesignation {
      */
     public String getPath() {
         return uri.getPath();
+    }
+
+    /**
+     * Get the first attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the first attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getFirstAttributeValue(String name) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * Get the first attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @param defaultValue the value to return if no such attribute exists
+     * @return the first attribute value for the given name, or {@code defaultValue} if no such attribute exists
+     */
+    public AttributeValue getFirstAttributeValue(String name, AttributeValue defaultValue) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? defaultValue : list.get(0);
+    }
+
+    /**
+     * Get the last attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the last attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getLastAttributeValue(String name) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? null : list.get(list.size() - 1);
+    }
+
+    /**
+     * Get the last attribute value for the given name.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @param defaultValue the value to return if no such attribute exists
+     * @return the last attribute value for the given name, or {@code null} if no such attribute exists
+     */
+    public AttributeValue getLastAttributeValue(String name, AttributeValue defaultValue) {
+        Assert.checkNotNullParam("name", name);
+        final List<AttributeValue> list = attributes.getOrDefault(name, Collections.emptyList());
+        return list.isEmpty() ? defaultValue : list.get(list.size() - 1);
+    }
+
+    /**
+     * Get the values of the attribute with the given name.  If no such attribute exists, an empty list is returned.
+     *
+     * @param name the attribute name (must not be {@code null})
+     * @return the values of the attribute with the given name (not {@code null})
+     */
+    public List<AttributeValue> getAttributeValues(String name) {
+        Assert.checkNotNullParam("name", name);
+        return attributes.getOrDefault(name, Collections.emptyList());
     }
 }
