@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.context.ContextManager;
+import org.wildfly.common.context.Contextual;
 import org.wildfly.discovery.impl.AggregateDiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryRequest;
@@ -36,14 +38,34 @@ import org.wildfly.discovery.spi.DiscoveryResult;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class Discovery {
+public final class Discovery implements Contextual<Discovery> {
 
-    static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
+    private static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
+
+    private static final ContextManager<Discovery> CONTEXT_MANAGER = new ContextManager<Discovery>(Discovery.class, "org.wildfly.discovery");
 
     private final DiscoveryProvider provider;
 
     Discovery(final DiscoveryProvider provider) {
         this.provider = provider;
+    }
+
+    /**
+     * Get the instance context manager.  Delegates to {@link #getContextManager()}.
+     *
+     * @return the instance context manager (not {@code null})
+     */
+    public ContextManager<Discovery> getInstanceContextManager() {
+        return CONTEXT_MANAGER;
+    }
+
+    /**
+     * Get the context manager.
+     *
+     * @return the context manager (not {@code null})
+     */
+    public static ContextManager<Discovery> getContextManager() {
+        return CONTEXT_MANAGER;
     }
 
     /**

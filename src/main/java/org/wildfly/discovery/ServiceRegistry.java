@@ -19,6 +19,8 @@
 package org.wildfly.discovery;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.context.ContextManager;
+import org.wildfly.common.context.Contextual;
 import org.wildfly.discovery.spi.RegistryProvider;
 
 /**
@@ -31,11 +33,32 @@ import org.wildfly.discovery.spi.RegistryProvider;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ServiceRegistry {
+public final class ServiceRegistry implements Contextual<ServiceRegistry> {
+
+    private static final ContextManager<ServiceRegistry> CONTEXT_MANAGER = new ContextManager<ServiceRegistry>(ServiceRegistry.class, "org.wildfly.discovery.registration");
+
     private final RegistryProvider registryProvider;
 
     private ServiceRegistry(final RegistryProvider registryProvider) {
         this.registryProvider = registryProvider;
+    }
+
+    /**
+     * Get the instance context manager.  Delegates to {@link #getContextManager()}.
+     *
+     * @return the instance context manager (not {@code null})
+     */
+    public ContextManager<ServiceRegistry> getInstanceContextManager() {
+        return getContextManager();
+    }
+
+    /**
+     * Get the context manager.
+     *
+     * @return the context manager (not {@code null})
+     */
+    public static ContextManager<ServiceRegistry> getContextManager() {
+        return CONTEXT_MANAGER;
     }
 
     /**
