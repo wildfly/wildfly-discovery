@@ -35,7 +35,12 @@ import org.wildfly.discovery.spi.RegistryProvider;
  */
 public final class ServiceRegistry implements Contextual<ServiceRegistry> {
 
-    private static final ContextManager<ServiceRegistry> CONTEXT_MANAGER = new ContextManager<ServiceRegistry>(ServiceRegistry.class, "org.wildfly.discovery.registration");
+    private static final ContextManager<ServiceRegistry> CONTEXT_MANAGER;
+
+    static {
+        CONTEXT_MANAGER = new ContextManager<ServiceRegistry>(ServiceRegistry.class, "org.wildfly.discovery.registration");
+        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> create(ConfiguredProvider.INSTANCE));
+    }
 
     private final RegistryProvider registryProvider;
 

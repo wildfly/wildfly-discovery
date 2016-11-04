@@ -42,7 +42,12 @@ public final class Discovery implements Contextual<Discovery> {
 
     private static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
 
-    private static final ContextManager<Discovery> CONTEXT_MANAGER = new ContextManager<Discovery>(Discovery.class, "org.wildfly.discovery");
+    private static final ContextManager<Discovery> CONTEXT_MANAGER;
+
+    static {
+        CONTEXT_MANAGER = new ContextManager<Discovery>(Discovery.class, "org.wildfly.discovery");
+        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> create(ConfiguredProvider.INSTANCE));
+    }
 
     private final DiscoveryProvider provider;
 

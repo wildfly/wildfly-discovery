@@ -43,5 +43,17 @@
             <artifactId>wildfly-common</artifactId>
             <version>1.2.0.Beta1</version>
         </dependency>
+        <dependency>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
+            <version>1.0.0.Beta1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.modules</groupId>
+            <artifactId>jboss-modules</artifactId>
+            <version>1.6.0.Beta4-SNAPSHOT</version>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>
