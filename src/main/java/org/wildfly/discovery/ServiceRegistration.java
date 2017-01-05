@@ -18,9 +18,7 @@
 
 package org.wildfly.discovery;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 import org.wildfly.common.Assert;
 
@@ -37,7 +35,7 @@ public interface ServiceRegistration extends AutoCloseable {
     void close();
 
     /**
-     * Invalidate this registration immediately (possibly temporarily).
+     * Invalidate this registration immediately (possibly temporarily) without closing it.
      */
     void deactivate();
 
@@ -47,37 +45,12 @@ public interface ServiceRegistration extends AutoCloseable {
     void activate();
 
     /**
-     * Activate this registration for the given duration.
+     * Hint to this registration that deactivation of the service is likely at the given time.
      *
-     * @param time the time amount
-     * @param unit the time unit (must not be {@code null})
+     * @param instant the time at which deactivation is likely (must not be {@code null})
      */
-    void activateFor(long time, TimeUnit unit);
-
-    /**
-     * Activate this registration for the given duration.
-     *
-     * @param duration the duration (must not be {@code null})
-     */
-    default void activateFor(Duration duration) {
-        Assert.checkNotNullParam("duration", duration);
-        if (duration.isNegative() || duration.isZero()) {
-            return;
-        }
-        if (duration.getSeconds() > 1_000_000) {
-            activateFor(duration.getSeconds(), TimeUnit.SECONDS);
-        } else {
-            activateFor(duration.toNanos(), TimeUnit.NANOSECONDS);
-        }
-    }
-
-    /**
-     * Activate this registration until the given deadline.
-     *
-     * @param instant the deadline (must not be {@code null})
-     */
-    default void activateUntil(Instant instant) {
-        activateFor(Duration.between(Instant.now(), instant));
+    default void hintDeactivateAt(Instant instant) {
+        Assert.checkNotNullParam("instant", instant);
     }
 
     /**
@@ -101,9 +74,6 @@ public interface ServiceRegistration extends AutoCloseable {
         }
 
         public void activate() {
-        }
-
-        public void activateFor(final long time, final TimeUnit unit) {
         }
 
         public String toString() {

@@ -18,11 +18,7 @@
 
 package org.wildfly.discovery;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.concurrent.TimeUnit;
 
 import org.wildfly.common.Assert;
 
@@ -63,41 +59,9 @@ public class AggregateServiceRegistration implements ServiceRegistration {
         }
     }
 
-    private TemporalUnit convertUnit(TimeUnit unit) {
-        switch (unit) {
-            case NANOSECONDS:
-                return ChronoUnit.NANOS;
-            case MICROSECONDS:
-                return ChronoUnit.MICROS;
-            case MILLISECONDS:
-                return ChronoUnit.MILLIS;
-            case SECONDS:
-                return ChronoUnit.SECONDS;
-            case MINUTES:
-                return ChronoUnit.MINUTES;
-            case HOURS:
-                return ChronoUnit.HOURS;
-            case DAYS:
-                return ChronoUnit.DAYS;
-            // last ditch guess
-            default:
-                return ChronoUnit.valueOf(unit.toString());
-        }
-    }
-
-    public void activateFor(final long time, final TimeUnit unit) {
-        // resist clock skew
-        activateUntil(Instant.now().plus(time, convertUnit(unit)));
-    }
-
-    public void activateFor(final Duration duration) {
-        // resist clock skew
-        activateUntil(Instant.now().plus(duration));
-    }
-
-    public void activateUntil(final Instant instant) {
+    public void hintDeactivateAt(final Instant instant) {
         for (ServiceRegistration registration : registrations) {
-            if (registration != null) registration.activateUntil(instant);
+            if (registration != null) registration.hintDeactivateAt(instant);
         }
     }
 }
