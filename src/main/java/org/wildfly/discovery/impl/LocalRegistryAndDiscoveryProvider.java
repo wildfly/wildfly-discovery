@@ -23,8 +23,7 @@ import static java.lang.Math.max;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.AggregateServiceRegistration;
@@ -103,11 +102,10 @@ public final class LocalRegistryAndDiscoveryProvider implements RegistryProvider
 
     final class Handle implements ServiceRegistration {
         @SuppressWarnings("NumericOverflow")
-        private static final long FLAG_CLOSED       = 1L << 63;
-        private static final long FLAG_DEACTIVATED  = 1L << 62;
-        private static final long TIME_MASK         = (1L << 62) - 1;
+        private static final int FLAG_CLOSED       = 1 << 0;
+        private static final int FLAG_DEACTIVATED  = 1 << 1;
 
-        private final AtomicLong state = new AtomicLong(0);
+        private final AtomicInteger state = new AtomicInteger(0);
         private final ServiceURL serviceURL;
         private final boolean remove;
 
@@ -122,8 +120,8 @@ public final class LocalRegistryAndDiscoveryProvider implements RegistryProvider
         }
 
         public void deactivate() {
-            final AtomicLong state = this.state;
-            long oldVal;
+            final AtomicInteger state = this.state;
+            int oldVal;
             do {
                 oldVal = state.get();
                 if ((oldVal & (FLAG_CLOSED | FLAG_DEACTIVATED)) != 0L) {
@@ -134,47 +132,19 @@ public final class LocalRegistryAndDiscoveryProvider implements RegistryProvider
         }
 
         public void activate() {
-            final AtomicLong state = this.state;
-            long oldVal;
+            final AtomicInteger state = this.state;
+            int oldVal;
             do {
                 oldVal = state.get();
-                if ((oldVal & FLAG_CLOSED) != 0L) {
+                if ((oldVal & FLAG_CLOSED) != 0) {
                     // nothing to do
                     return;
                 }
-                if (oldVal == 0L) {
-                    // already indefinitely active
+                if (oldVal == 0) {
+                    // already active
                     return;
                 }
-            } while (! state.compareAndSet(oldVal, 0L));
-        }
-
-        public void activateFor(final long time, final TimeUnit unit) {
-            final long micros = unit.toMicros(time);
-            // convert to stamp
-            final long now = nowMicros();
-            if (micros > TIME_MASK) {
-                activate();
-                return;
-            }
-            final long ts = now + micros;
-            if (ts > TIME_MASK || ts < 0) {
-                activate();
-                return;
-            }
-            final AtomicLong state = this.state;
-            long oldVal;
-            do {
-                oldVal = state.get();
-                if ((oldVal & FLAG_CLOSED) != 0L) {
-                    // nothing to do
-                    return;
-                }
-                if (oldVal == ts) {
-                    // unlikely but it costs us nothing to check
-                    return;
-                }
-            } while (! state.compareAndSet(oldVal, ts));
+            } while (! state.compareAndSet(oldVal, 0));
         }
 
         ServiceURL getServiceURL() {
@@ -183,11 +153,7 @@ public final class LocalRegistryAndDiscoveryProvider implements RegistryProvider
 
         boolean isOpenAndActive() {
             final long val = state.get();
-            if ((val & (FLAG_CLOSED | FLAG_DEACTIVATED)) != 0L) {
-                return false;
-            }
-            long stamp = val & TIME_MASK;
-            return stamp == 0L || nowMicros() < stamp;
+            return (val & (FLAG_CLOSED | FLAG_DEACTIVATED)) == 0L;
         }
     }
 }
