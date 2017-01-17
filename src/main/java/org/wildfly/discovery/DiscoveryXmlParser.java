@@ -69,13 +69,13 @@ final class DiscoveryXmlParser {
 
     private static ConfiguredProvider parseConfiguration(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         if (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            final int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
                         case "discovery": {
                             ConfiguredProvider configuredProvider = parseDiscoveryElement(reader);
-                            expectDocumentEnd(reader, configuredProvider);
                             return configuredProvider;
                         }
                         default: {
@@ -91,36 +91,14 @@ final class DiscoveryXmlParser {
         return new ConfiguredProvider(DiscoveryProvider.EMPTY, RegistryProvider.EMPTY);
     }
 
-    private static void expectDocumentEnd(final ConfigurationXMLStreamReader reader, final ConfiguredProvider configuredProvider) throws ConfigXMLParseException {
-        while (reader.hasNext()) {
-            switch (reader.next()) {
-                case COMMENT:
-                case PROCESSING_INSTRUCTION: {
-                    break;
-                }
-                case END_DOCUMENT: {
-                    return;
-                }
-                case START_ELEMENT:
-                case END_ELEMENT: {
-                    throw reader.unexpectedElement();
-                }
-                default: {
-                    if (reader.isWhiteSpace()) break;
-                    throw reader.unexpectedContent();
-                }
-            }
-        }
-        return;
-    }
-
     private static ConfiguredProvider parseDiscoveryElement(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         DiscoveryProvider discoveryProvider = DiscoveryProvider.EMPTY;
         RegistryProvider registryProvider = RegistryProvider.EMPTY;
         LocalRegistryAndDiscoveryProvider localRegistry = new LocalRegistryAndDiscoveryProvider();
         requireNoAttributes(reader);
         out: while (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
@@ -142,6 +120,7 @@ final class DiscoveryXmlParser {
                             throw reader.unexpectedElement();
                         }
                     }
+                    break;
                 }
                 case END_ELEMENT: {
                     break out;
@@ -154,12 +133,14 @@ final class DiscoveryXmlParser {
     private static RegistryProvider parseRegistryProvider(final ConfigurationXMLStreamReader reader, final LocalRegistryAndDiscoveryProvider localRegistry) throws ConfigXMLParseException {
         requireNoAttributes(reader);
         RegistryProvider registryProvider;
-        switch (reader.nextTag()) {
+        final int tag = reader.nextTag();
+        switch (tag) {
             case START_ELEMENT: {
                 checkNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "local-registry": {
                         registryProvider = localRegistry;
+                        expectEnd(reader);
                         break;
                     }
                     case "aggregate": {
@@ -186,12 +167,14 @@ final class DiscoveryXmlParser {
     private static DiscoveryProvider parseDiscoveryProvider(final ConfigurationXMLStreamReader reader, final LocalRegistryAndDiscoveryProvider localRegistry) throws ConfigXMLParseException {
         requireNoAttributes(reader);
         DiscoveryProvider discoveryProvider;
-        switch (reader.nextTag()) {
+        final int tag = reader.nextTag();
+        switch (tag) {
             case START_ELEMENT: {
                 checkNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "local-registry": {
                         discoveryProvider = localRegistry;
+                        expectEnd(reader);
                         break;
                     }
                     case "static": {
@@ -221,7 +204,8 @@ final class DiscoveryXmlParser {
         requireNoAttributes(reader);
         final List<DiscoveryProvider> delegates = new ArrayList<>();
         out: while (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            final int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
@@ -246,7 +230,8 @@ final class DiscoveryXmlParser {
         requireNoAttributes(reader);
         final List<RegistryProvider> delegates = new ArrayList<>();
         out: while (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            final int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
@@ -271,7 +256,8 @@ final class DiscoveryXmlParser {
         List<ServiceURL> serviceURLs = new ArrayList<>();
         requireNoAttributes(reader);
         out: while (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            final int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
@@ -337,7 +323,8 @@ final class DiscoveryXmlParser {
         if (abstractType != null) builder.setAbstractType(abstractType);
         if (abstractTypeAuthority != null) builder.setAbstractTypeAuthority(abstractTypeAuthority);
         out: while (reader.hasNext()) {
-            switch (reader.nextTag()) {
+            final int tag = reader.nextTag();
+            switch (tag) {
                 case START_ELEMENT: {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
@@ -349,6 +336,7 @@ final class DiscoveryXmlParser {
                             throw reader.unexpectedElement();
                         }
                     }
+                    break;
                 }
                 case END_ELEMENT: {
                     break out;
