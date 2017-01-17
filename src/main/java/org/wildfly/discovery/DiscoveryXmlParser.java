@@ -18,10 +18,7 @@
 
 package org.wildfly.discovery;
 
-import static javax.xml.stream.XMLStreamConstants.COMMENT;
-import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
-import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 import java.net.URI;
@@ -37,11 +34,13 @@ import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
+import org.wildfly.common.Assert;
 import org.wildfly.discovery.impl.AggregateDiscoveryProvider;
 import org.wildfly.discovery.impl.AggregateRegistryProvider;
 import org.wildfly.discovery.impl.LocalRegistryAndDiscoveryProvider;
 import org.wildfly.discovery.impl.StaticDiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryProvider;
+import org.wildfly.discovery.spi.ExternalDiscoveryConfigurator;
 import org.wildfly.discovery.spi.RegistryProvider;
 
 /**
@@ -58,16 +57,47 @@ final class DiscoveryXmlParser {
     static final String NS_DISCOVERY_1_0 = "urn:wildfly-discovery:1.0";
 
     static ConfiguredProvider getConfiguredProvider() {
+        List<DiscoveryProvider> discoveryProviders = new ArrayList<>();
+        List<RegistryProvider> registryProviders = new ArrayList<>();
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
         if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_DISCOVERY_1_0))) {
-            return parseConfiguration(streamReader);
+            parseConfiguration(streamReader, discoveryProviders, registryProviders);
         } catch (ConfigXMLParseException e) {
             throw new InvalidDiscoveryConfigurationException(e);
         }
-        return new ConfiguredProvider(DiscoveryProvider.EMPTY, RegistryProvider.EMPTY);
+        ServiceLoader<ExternalDiscoveryConfigurator> loader = ServiceLoader.load(ExternalDiscoveryConfigurator.class);
+        final Iterator<ExternalDiscoveryConfigurator> iterator = loader.iterator();
+        for (;;) try {
+            if (! iterator.hasNext()) break;
+            final ExternalDiscoveryConfigurator configurator = iterator.next();
+            configurator.configure(
+                provider -> discoveryProviders.add(Assert.checkNotNullParam("provider", provider)),
+                provider -> registryProviders.add(Assert.checkNotNullParam("provider", provider))
+            );
+        } catch (ServiceConfigurationError | RuntimeException e) {
+            // TODO log & continue
+        }
+
+        final DiscoveryProvider discoveryProvider;
+        if (discoveryProviders.isEmpty()) {
+            discoveryProvider = DiscoveryProvider.EMPTY;
+        } else if (discoveryProviders.size() == 1) {
+            discoveryProvider = discoveryProviders.get(0);
+        } else {
+            discoveryProvider = new AggregateDiscoveryProvider(discoveryProviders.toArray(NO_DISCOVERY_PROVIDERS));
+        }
+        final RegistryProvider registryProvider;
+        if (registryProviders.isEmpty()) {
+            registryProvider = RegistryProvider.EMPTY;
+        } else if (registryProviders.size() == 1) {
+            registryProvider = registryProviders.get(0);
+        } else {
+            registryProvider = new AggregateRegistryProvider(registryProviders.toArray(NO_REGISTRY_PROVIDERS));
+        }
+        return new ConfiguredProvider(discoveryProvider, registryProvider);
     }
 
-    private static ConfiguredProvider parseConfiguration(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    private static void parseConfiguration(final ConfigurationXMLStreamReader reader, final List<DiscoveryProvider> discoveryProviders, final List<RegistryProvider> registryProviders) throws ConfigXMLParseException {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             switch (tag) {
@@ -75,8 +105,8 @@ final class DiscoveryXmlParser {
                     checkNamespace(reader);
                     switch (reader.getLocalName()) {
                         case "discovery": {
-                            ConfiguredProvider configuredProvider = parseDiscoveryElement(reader);
-                            return configuredProvider;
+                            parseDiscoveryElement(reader, discoveryProviders, registryProviders);
+                            return;
                         }
                         default: {
                             throw reader.unexpectedElement();
@@ -88,10 +118,9 @@ final class DiscoveryXmlParser {
                 }
             }
         }
-        return new ConfiguredProvider(DiscoveryProvider.EMPTY, RegistryProvider.EMPTY);
     }
 
-    private static ConfiguredProvider parseDiscoveryElement(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    private static void parseDiscoveryElement(final ConfigurationXMLStreamReader reader, final List<DiscoveryProvider> discoveryProviders, final List<RegistryProvider> registryProviders) throws ConfigXMLParseException {
         DiscoveryProvider discoveryProvider = DiscoveryProvider.EMPTY;
         RegistryProvider registryProvider = RegistryProvider.EMPTY;
         LocalRegistryAndDiscoveryProvider localRegistry = new LocalRegistryAndDiscoveryProvider();
@@ -106,14 +135,14 @@ final class DiscoveryXmlParser {
                             if (discoveryProvider != DiscoveryProvider.EMPTY) {
                                 throw reader.unexpectedElement();
                             }
-                            discoveryProvider = parseDiscoveryProvider(reader, localRegistry);
+                            discoveryProviders.add(parseDiscoveryProvider(reader, localRegistry));
                             break;
                         }
                         case "registry-provider": {
                             if (registryProvider != RegistryProvider.EMPTY) {
                                 throw reader.unexpectedElement();
                             }
-                            registryProvider = parseRegistryProvider(reader, localRegistry);
+                            registryProviders.add(parseRegistryProvider(reader, localRegistry));
                             break;
                         }
                         default: {
@@ -127,7 +156,6 @@ final class DiscoveryXmlParser {
                 }
             }
         }
-        return new ConfiguredProvider(discoveryProvider, registryProvider);
     }
 
     private static RegistryProvider parseRegistryProvider(final ConfigurationXMLStreamReader reader, final LocalRegistryAndDiscoveryProvider localRegistry) throws ConfigXMLParseException {
