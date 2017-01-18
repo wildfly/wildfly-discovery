@@ -24,7 +24,7 @@
 
     <groupId>org.wildfly.discovery</groupId>
     <artifactId>wildfly-discovery-client</artifactId>
-    <version>1.0.0.Beta5-SNAPSHOT</version>
+    <version>1.0.0.Beta5</version>
 
     <parent>
         <groupId>org.jboss</groupId>
