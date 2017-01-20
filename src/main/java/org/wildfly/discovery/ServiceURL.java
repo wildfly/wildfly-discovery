@@ -133,13 +133,23 @@ public final class ServiceURL extends ServiceDesignation {
          */
         public Builder setUri(final URI uri) {
             Assert.checkNotNullParam("uri", uri);
-            if (uri.getFragment() != null) {
-                throw new IllegalArgumentException("Service URIs may not have a fragment");
+            final String fragment = uri.getFragment();
+            if (fragment != null && ! fragment.isEmpty()) {
+                throw new IllegalArgumentException("Service URI " + uri + " may not have a fragment");
             }
             if (! uri.isAbsolute()) {
-                throw new IllegalArgumentException("Service URIs must be absolute");
+                throw new IllegalArgumentException("Service URI " + uri + " must be absolute");
             }
-            this.uri = uri;
+            final String query = uri.getQuery();
+            // sanitized URI
+            try {
+                this.uri = uri.isOpaque() ?
+                           new URI(uri.getScheme(), uri.getSchemeSpecificPart(), null) :
+                           new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), query != null && query.isEmpty() ? null : query, null);
+            } catch (URISyntaxException e) {
+                // should be impossible as the original URI was valid
+                throw new IllegalStateException(e);
+            }
             return this;
         }
 
