@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
-            <version>1.6.0.Beta4-SNAPSHOT</version>
+            <version>1.6.0.Beta5</version>
             <optional>true</optional>
             <scope>provided</scope>
         </dependency>
