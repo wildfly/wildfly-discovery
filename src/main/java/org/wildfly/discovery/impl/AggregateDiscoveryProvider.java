@@ -99,6 +99,10 @@ public final class AggregateDiscoveryProvider implements DiscoveryProvider {
             }
         }
 
+        public void reportProblem(final Throwable description) {
+            if (! get()) delegate.reportProblem(description);
+        }
+
         public void addMatch(final URI uri) {
             if (! get()) delegate.addMatch(uri);
         }

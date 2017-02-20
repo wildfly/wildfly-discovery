@@ -19,12 +19,15 @@
 package org.wildfly.discovery;
 
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.annotation.NotNull;
 import org.wildfly.common.context.ContextManager;
 import org.wildfly.common.context.Contextual;
 import org.wildfly.discovery.impl.AggregateDiscoveryProvider;
@@ -87,7 +90,8 @@ public final class Discovery implements Contextual<Discovery> {
     public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec) {
         Assert.checkNotNullParam("serviceType", serviceType);
         final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
-        return new BlockingQueueServicesQueue(queue, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue)));
+        final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
+        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue, problems)));
     }
 
     /**
@@ -129,15 +133,22 @@ public final class Discovery implements Contextual<Discovery> {
     static final class BlockingQueueDiscoveryResult implements DiscoveryResult {
         private final AtomicBoolean done = new AtomicBoolean(false);
         private final BlockingQueue<ServiceURL> queue;
+        private final CopyOnWriteArrayList<Throwable> problems;
 
-        BlockingQueueDiscoveryResult(final BlockingQueue<ServiceURL> queue) {
+        BlockingQueueDiscoveryResult(final BlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems) {
             this.queue = queue;
+            this.problems = problems;
         }
 
         public void complete() {
             if (done.compareAndSet(false, true)) {
                 queue.add(END_MARK);
             }
+        }
+
+        public void reportProblem(final Throwable description) {
+            Assert.checkNotNullParam("description", description);
+            problems.add(description);
         }
 
         public void addMatch(final ServiceURL serviceURL) {
@@ -150,12 +161,14 @@ public final class Discovery implements Contextual<Discovery> {
 
     static final class BlockingQueueServicesQueue implements ServicesQueue {
         private final LinkedBlockingQueue<ServiceURL> queue;
+        private final CopyOnWriteArrayList<Throwable> problems;
         private final DiscoveryRequest request;
         private ServiceURL next;
         private boolean done;
 
-        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final DiscoveryRequest request) {
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request) {
             this.queue = queue;
+            this.problems = problems;
             this.request = request;
         }
 
@@ -214,6 +227,11 @@ public final class Discovery implements Contextual<Discovery> {
             if (! isFinished()) {
                 request.cancel();
             }
+        }
+
+        @NotNull
+        public List<Throwable> getProblems() {
+            return problems;
         }
     }
 }

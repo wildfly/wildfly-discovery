@@ -36,6 +36,14 @@ public interface DiscoveryResult {
     void complete();
 
     /**
+     * Report a discovery problem.  The given description may be inserted into an exception that is visible to the end
+     * user.
+     *
+     * @param description a description of the problem (must not be {@code null})
+     */
+    void reportProblem(Throwable description);
+
+    /**
      * Indicate that a matching URI was discovered.  A service URL with no abstract type or type authorities and no
      * attributes is created for the service URI.
      *

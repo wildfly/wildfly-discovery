@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
-            <version>1.2.0.Beta1</version>
+            <version>1.2.0.Beta5</version>
         </dependency>
         <dependency>
             <groupId>org.wildfly.client</groupId>

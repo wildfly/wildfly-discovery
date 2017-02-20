@@ -19,9 +19,11 @@
 package org.wildfly.discovery;
 
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.annotation.NotNull;
 
 /**
  * A queue for receiving service query answers.
@@ -108,6 +110,14 @@ public interface ServicesQueue extends AutoCloseable {
     void close();
 
     /**
+     * Get a list of problems that occurred during discovery.
+     *
+     * @return a list of problems that occurred during discovery (not {@code null})
+     */
+    @NotNull
+    List<Throwable> getProblems();
+
+    /**
      * Create a version of this queue which has an absolute timeout, relative to when this method is called.
      *
      * @param time the timeout time
@@ -161,6 +171,11 @@ public interface ServicesQueue extends AutoCloseable {
 
             public void close() {
                 ServicesQueue.this.close();
+            }
+
+            @NotNull
+            public List<Throwable> getProblems() {
+                return ServicesQueue.this.getProblems();
             }
         };
     }
