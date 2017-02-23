@@ -440,27 +440,9 @@ final class DiscoveryXmlParser {
                 }
             }
         }
-        ClassLoader searchLoader = DiscoveryXmlParser.class.getClassLoader();
         T item;
         if (moduleName != null) {
-            if (className != null) try {
-                item = Module.loadClassFromCallerModuleLoader(moduleName, className).asSubclass(type).newInstance();
-            } catch (ModuleLoadException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                throw new InvalidDiscoveryConfigurationException(e);
-            } else try {
-                final ServiceLoader<T> loader = Module.loadServiceFromCallerModuleLoader(moduleName, type);
-                final Iterator<T> iterator = loader.iterator();
-                try {
-                    if (! iterator.hasNext()) {
-                        throw new InvalidDiscoveryConfigurationException("No provider found in module " + moduleName);
-                    }
-                    item = iterator.next();
-                } catch (ServiceConfigurationError e) {
-                    throw new InvalidDiscoveryConfigurationException(e);
-                }
-            } catch (ModuleLoadException e) {
-                throw new InvalidDiscoveryConfigurationException(e);
-            }
+           item = ModuleLoadDelegate.loadService(moduleName, className, type);
         } else {
             if (className != null) try {
                 item = Class.forName(className, true, DiscoveryXmlParser.class.getClassLoader()).asSubclass(type).newInstance();
@@ -482,6 +464,34 @@ final class DiscoveryXmlParser {
         }
         expectEnd(reader);
         return item;
+    }
+
+    static final class ModuleLoadDelegate {
+        static <T> T loadService(String moduleName, String className, final Class<T> type) throws ConfigXMLParseException {
+            if (className != null) {
+                try {
+                    Module.loadClassFromCallerModuleLoader(moduleName, className).asSubclass(type).newInstance();
+                } catch (ModuleLoadException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                    throw new InvalidDiscoveryConfigurationException(e);
+                }
+            } else {
+                try {
+                    final ServiceLoader<T> loader = Module.loadServiceFromCallerModuleLoader(moduleName, type);
+                    final Iterator<T> iterator = loader.iterator();
+                    try {
+                        if (!iterator.hasNext()) {
+                            throw new InvalidDiscoveryConfigurationException("No provider found in module " + moduleName);
+                        }
+                        return iterator.next();
+                    } catch (ServiceConfigurationError e) {
+                        throw new InvalidDiscoveryConfigurationException(e);
+                    }
+                } catch (ModuleLoadException e) {
+                    throw new InvalidDiscoveryConfigurationException(e);
+                }
+            }
+            return null;
+        }
     }
 
     private static void expectEnd(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
