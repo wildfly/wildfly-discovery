@@ -253,7 +253,7 @@ public final class ServiceURL extends ServiceDesignation {
      * @return {@code true} if this service satisfies the filter specification, {@code false} if it does not
      */
     public boolean satisfies(final FilterSpec filterSpec) {
-        return filterSpec.matchesMulti(attributes);
+        return filterSpec == null || filterSpec.matchesMulti(attributes);
     }
 
     /**
