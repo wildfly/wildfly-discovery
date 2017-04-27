@@ -323,19 +323,19 @@ final class DiscoveryXmlParser {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "uri": {
-                    uri = reader.getURIAttributeValue(i);
+                    uri = reader.getURIAttributeValueResolved(i);
                     break;
                 }
                 case "uri-scheme-authority": {
-                    uriSchemeAuthority = reader.getAttributeValue(i);
+                    uriSchemeAuthority = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "abstract-type": {
-                    abstractType = reader.getAttributeValue(i);
+                    abstractType = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "abstract-type-authority": {
-                    abstractTypeAuthority = reader.getAttributeValue(i);
+                    abstractTypeAuthority = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: {
@@ -388,11 +388,11 @@ final class DiscoveryXmlParser {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "name": {
-                    name = reader.getAttributeValue(i);
+                    name = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "value": {
-                    value = AttributeValue.fromString(reader.getAttributeValue(i));
+                    value = AttributeValue.fromString(reader.getAttributeValueResolved(i));
                     break;
                 }
                 default: {
@@ -428,11 +428,11 @@ final class DiscoveryXmlParser {
             checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "class": {
-                    className = reader.getAttributeValue(i);
+                    className = reader.getAttributeValueResolved(i);
                     break;
                 }
                 case "module": {
-                    moduleName = reader.getAttributeValue(i);
+                    moduleName = reader.getAttributeValueResolved(i);
                     break;
                 }
                 default: {
