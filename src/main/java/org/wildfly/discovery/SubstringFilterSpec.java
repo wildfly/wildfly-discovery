@@ -24,13 +24,13 @@ import java.util.Map;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class SubstringFilterSpec extends FilterSpec {
+public final class SubstringFilterSpec extends FilterSpec {
 
     private final String attribute;
     private final String initialPart;
     private final String finalPart;
 
-    public SubstringFilterSpec(final String attribute, final String initialPart, final String finalPart) {
+    SubstringFilterSpec(final String attribute, final String initialPart, final String finalPart) {
         this.attribute = attribute;
         this.initialPart = initialPart;
         this.finalPart = finalPart;
@@ -50,6 +50,45 @@ final class SubstringFilterSpec extends FilterSpec {
             }
         }
         return false;
+    }
+
+    public boolean mayMatch(final Collection<String> attributeNames) {
+        return attributeNames.contains(attribute);
+    }
+
+    public boolean mayNotMatch(final Collection<String> attributeNames) {
+        return true;
+    }
+
+    public <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E {
+        return visitor.handle(this, parameter);
+    }
+
+    /**
+     * Get the attribute to compare against.
+     *
+     * @return the attribute to compare against
+     */
+    public String getAttribute() {
+        return attribute;
+    }
+
+    /**
+     * Get the initial part which must match.
+     *
+     * @return the initial part which must match
+     */
+    public String getInitialPart() {
+        return initialPart;
+    }
+
+    /**
+     * Get the final part which must match.
+     *
+     * @return the final part which must match.
+     */
+    public String getFinalPart() {
+        return finalPart;
     }
 
     void toString(final StringBuilder builder) {

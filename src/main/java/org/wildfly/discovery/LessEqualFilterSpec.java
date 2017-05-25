@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class LessEqualFilterSpec extends FilterSpec {
+public final class LessEqualFilterSpec extends FilterSpec {
 
     private final String attribute;
     private final AttributeValue value;
@@ -47,6 +47,36 @@ class LessEqualFilterSpec extends FilterSpec {
             }
         }
         return false;
+    }
+
+    public boolean mayMatch(final Collection<String> attributeNames) {
+        return attributeNames.contains(attribute);
+    }
+
+    public boolean mayNotMatch(final Collection<String> attributeNames) {
+        return true;
+    }
+
+    public <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E {
+        return visitor.handle(this, parameter);
+    }
+
+    /**
+     * Get the attribute to compare.
+     *
+     * @return the attribute to compare (not {@code null})
+     */
+    public String getAttribute() {
+        return attribute;
+    }
+
+    /**
+     * Get the value to check for.
+     *
+     * @return the value to check for (not {@code null})
+     */
+    public AttributeValue getValue() {
+        return value;
     }
 
     void toString(final StringBuilder builder) {

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2017 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,44 +22,46 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
+ * A filter spec which is either always true or always false.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class ListFilterSpec extends FilterSpec {
+public final class BooleanFilterSpec extends FilterSpec {
+    private final boolean value;
 
-    private final boolean all;
-    private final FilterSpec[] children;
-
-    ListFilterSpec(final boolean all, final FilterSpec... specs) {
-        if (specs.length == 0) {
-            throw new IllegalArgumentException("No child filters specified");
-        }
-        this.all = all;
-        children = specs;
+    BooleanFilterSpec(final boolean value) {
+        this.value = value;
     }
 
     public boolean matchesSimple(final Map<String, AttributeValue> attributes) {
-        for (FilterSpec child : children) {
-            if (child.matchesSimple(attributes) != all) {
-                return ! all;
-            }
-        }
-        return all;
+        return value;
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        for (FilterSpec child : children) {
-            if (child.matchesMulti(attributes) != all) {
-                return ! all;
-            }
-        }
-        return all;
+        return value;
+    }
+
+    public boolean mayMatch(final Collection<String> attributeNames) {
+        return value;
+    }
+
+    public boolean mayNotMatch(final Collection<String> attributeNames) {
+        return ! value;
+    }
+
+    public <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E {
+        return visitor.handle(this, parameter);
+    }
+
+    public boolean getValue() {
+        return value;
     }
 
     void toString(final StringBuilder builder) {
-        builder.append('(').append(all ? '&' : '|');
-        for (FilterSpec child : children) {
-            child.toString(builder);
+        if (value) {
+            builder.append("*");
+        } else {
+            builder.append("!*");
         }
-        builder.append(')');
     }
 }

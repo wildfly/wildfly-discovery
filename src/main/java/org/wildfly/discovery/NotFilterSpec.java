@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class NotFilterSpec extends FilterSpec {
+public final class NotFilterSpec extends FilterSpec {
     private final FilterSpec child;
 
     NotFilterSpec(final FilterSpec child) {
@@ -37,6 +37,27 @@ class NotFilterSpec extends FilterSpec {
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
         return ! child.matchesMulti(attributes);
+    }
+
+    public boolean mayMatch(final Collection<String> attributeNames) {
+        return child.mayNotMatch(attributeNames);
+    }
+
+    public boolean mayNotMatch(final Collection<String> attributeNames) {
+        return child.mayMatch(attributeNames);
+    }
+
+    public <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E {
+        return visitor.handle(this, parameter);
+    }
+
+    /**
+     * Get the child (inverted) filter spec.
+     *
+     * @return the child (inverted) filter spec
+     */
+    public FilterSpec getChild() {
+        return child;
     }
 
     void toString(final StringBuilder builder) {

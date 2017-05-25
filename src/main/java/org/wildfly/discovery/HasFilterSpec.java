@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class HasFilterSpec extends FilterSpec {
+public final class HasFilterSpec extends FilterSpec {
     private final String attribute;
 
     public HasFilterSpec(final String attribute) {
@@ -37,6 +37,27 @@ class HasFilterSpec extends FilterSpec {
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
         return attributes.containsKey(attribute);
+    }
+
+    public boolean mayMatch(final Collection<String> attributeNames) {
+        return attributeNames.contains(attribute);
+    }
+
+    public boolean mayNotMatch(final Collection<String> attributeNames) {
+        return ! mayMatch(attributeNames);
+    }
+
+    public <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E {
+        return visitor.handle(this, parameter);
+    }
+
+    /**
+     * Get the attribute to compare.
+     *
+     * @return the attribute to compare (not {@code null})
+     */
+    public String getAttribute() {
+        return attribute;
     }
 
     void toString(final StringBuilder builder) {

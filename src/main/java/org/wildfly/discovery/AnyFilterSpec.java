@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2017 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,35 +19,60 @@
 package org.wildfly.discovery;
 
 import java.util.Collection;
+import java.util.ListIterator;
 import java.util.Map;
 
+import org.wildfly.security.util.ArrayIterator;
+
 /**
+ * A filter specification matching any of a set of sub-filters.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class EqualsFilterSpec extends FilterSpec {
+public final class AnyFilterSpec extends FilterSpec implements Iterable<FilterSpec> {
 
-    private final String attribute;
-    private final AttributeValue value;
+    private final FilterSpec[] children;
 
-    EqualsFilterSpec(final String attribute, final AttributeValue value) {
-        this.attribute = attribute;
-        this.value = value;
+    AnyFilterSpec(final FilterSpec... specs) {
+        if (specs.length == 0) {
+            throw new IllegalArgumentException("No child filters specified");
+        }
+        children = specs;
     }
 
     public boolean matchesSimple(final Map<String, AttributeValue> attributes) {
-        return value.equals(attributes.get(attribute));
+        for (FilterSpec child : children) {
+            if (child.matchesSimple(attributes)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        final Collection<AttributeValue> collection = attributes.get(attribute);
-        return collection != null && collection.contains(value);
+        for (FilterSpec child : children) {
+            if (child.matchesMulti(attributes)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean mayMatch(final Collection<String> attributeNames) {
-        return attributeNames.contains(attribute);
+        for (FilterSpec child : children) {
+            if (child.mayMatch(attributeNames)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean mayNotMatch(final Collection<String> attributeNames) {
+        for (FilterSpec child : children) {
+            if (child.mayNotMatch(attributeNames)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -55,29 +80,15 @@ public final class EqualsFilterSpec extends FilterSpec {
         return visitor.handle(this, parameter);
     }
 
-    /**
-     * Get the attribute to compare.
-     *
-     * @return the attribute to compare (not {@code null})
-     */
-    public String getAttribute() {
-        return attribute;
-    }
-
-    /**
-     * Get the value to check for.
-     *
-     * @return the value to check for (not {@code null})
-     */
-    public AttributeValue getValue() {
-        return value;
-    }
-
     void toString(final StringBuilder builder) {
-        builder.append('(');
-        FilterSpec.escapeTo(attribute, builder);
-        builder.append('=');
-        builder.append(value);
+        builder.append('(').append('|');
+        for (FilterSpec child : children) {
+            child.toString(builder);
+        }
         builder.append(')');
+    }
+
+    public ListIterator<FilterSpec> iterator() {
+        return new ArrayIterator<FilterSpec>(children);
     }
 }

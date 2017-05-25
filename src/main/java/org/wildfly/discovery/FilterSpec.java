@@ -54,6 +54,28 @@ public abstract class FilterSpec implements Serializable {
      */
     public abstract boolean matchesMulti(Map<String, ? extends Collection<AttributeValue>> attributes);
 
+    /**
+     * Determine whether this filter spec might match an attribute map containing all of the given keys.
+     *
+     * @param attributeNames the attribute names
+     * @return {@code true} if the filter spec might match, {@code false} if it will definitely not match
+     */
+    public abstract boolean mayMatch(Collection<String> attributeNames);
+
+    /**
+     * Determine whether this filter spec might not match an attribute map containing all of the given keys.
+     *
+     * @param attributeNames the attribute names
+     * @return {@code true} if the filter spec might not match, {@code false} if it will definitely match
+     */
+    public abstract boolean mayNotMatch(Collection<String> attributeNames);
+
+    public abstract <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E;
+
+    public final <R, E extends Exception> R accept(Visitor<?, R, E> visitor) throws E {
+        return accept(visitor, null);
+    }
+
     private static final FilterSpec[] NONE = new FilterSpec[0];
 
     private static FilterSpec[] safeToArray(Collection<FilterSpec> collection) {
@@ -73,6 +95,9 @@ public abstract class FilterSpec implements Serializable {
         array = idx == 0 ? NONE : new FilterSpec[idx];
         return array;
     }
+
+    private static final FilterSpec TRUE = new BooleanFilterSpec(true);
+    private static final FilterSpec FALSE = new BooleanFilterSpec(false);
 
     /**
      * Create a new filter from a string.
@@ -431,6 +456,24 @@ public abstract class FilterSpec implements Serializable {
     }
 
     /**
+     * Create a filter which matches everything.
+     *
+     * @return the filter specification
+     */
+    public static FilterSpec all() {
+        return TRUE;
+    }
+
+    /**
+     * Create a filter which matches nothing.
+     *
+     * @return the filter specification
+     */
+    public static FilterSpec none() {
+        return FALSE;
+    }
+
+    /**
      * Create a filter which matches all of the given sub-filters.
      *
      * @param specs the sub-filters
@@ -438,7 +481,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec all(FilterSpec... specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new ListFilterSpec(true, specs.clone());
+        return new AllFilterSpec(specs.clone());
     }
 
     /**
@@ -449,7 +492,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec all(Collection<FilterSpec> specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new ListFilterSpec(true, safeToArray(specs));
+        return new AllFilterSpec(safeToArray(specs));
     }
 
     /**
@@ -460,7 +503,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec any(FilterSpec... specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new ListFilterSpec(false, specs.clone());
+        return new AnyFilterSpec(specs.clone());
     }
 
     /**
@@ -471,7 +514,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec any(Collection<FilterSpec> specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new ListFilterSpec(false, safeToArray(specs));
+        return new AnyFilterSpec(safeToArray(specs));
     }
 
     /**
@@ -692,6 +735,144 @@ public abstract class FilterSpec implements Serializable {
 
         final Object readResolve() {
             return FilterSpec.fromString(string);
+        }
+    }
+
+    /**
+     * A visitor for filter spec traversal.
+     *
+     * @param <P> the type of parameter to pass to the visit function
+     * @param <R> the return type of the visit function
+     */
+    public interface Visitor<P, R, E extends Exception> {
+        /**
+         * Handle any otherwise-unmatched filter specification type.
+         * The default implementation returns {@code null}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(FilterSpec filterSpec, P parameter) throws E {
+            return null;
+        }
+
+        /**
+         * Handle an equality filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(EqualsFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a greater-than-or-equal-to filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(GreaterEqualFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a presence filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(HasFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a less-than-or-equal-to filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(LessEqualFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a match-any filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(AnyFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a match-all filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(AllFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle an inverted ("not") filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(NotFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a substring equality filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(SubstringFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
+        }
+
+        /**
+         * Handle a boolean filter specification type.
+         * The default implementation delegates to {@link #handle(FilterSpec,Object) handle(FilterSpec,P)}.
+         *
+         * @param filterSpec the filter specification (not {@code null})
+         * @param parameter the parameter passed in to the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @return the value to return from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         * @throws E to throw this exception from the {@link FilterSpec#accept(Visitor,Object) FilterSpec.accept(Visitor&lt;P, R, E&gt;, P)} method
+         */
+        default R handle(BooleanFilterSpec filterSpec, P parameter) throws E {
+            return handle((FilterSpec) filterSpec, parameter);
         }
     }
 }
