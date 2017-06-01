@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.ListIterator;
 import java.util.Map;
 
-import org.wildfly.security.util.ArrayIterator;
-
 /**
  * A filter specification matching all of a set of sub-filters.
  *
