@@ -306,9 +306,9 @@ final class DiscoveryXmlParser {
         return new StaticDiscoveryProvider(serviceURLs);
     }
 
-    private static void requireNoAttributes(final ConfigurationXMLStreamReader reader) {
+    private static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         if (reader.getAttributeCount() > 0) {
-            reader.unexpectedAttribute(0);
+            throw reader.unexpectedAttribute(0);
         }
     }
 
