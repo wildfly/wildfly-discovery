@@ -297,6 +297,7 @@ final class DiscoveryXmlParser {
                             throw reader.unexpectedElement();
                         }
                     }
+                    break;
                 }
                 case END_ELEMENT: {
                     break out;

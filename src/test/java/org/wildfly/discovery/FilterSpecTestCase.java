@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -11,10 +12,8 @@ import org.wildfly.discovery.impl.StaticDiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryProvider;
 
 import java.net.URI;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Tests for FilterSpec functionality
@@ -104,7 +103,7 @@ public final class FilterSpecTestCase {
                 serviceURL = servicesQueue.takeService();
             } while (serviceURL != null) ;
         } catch (InterruptedException ie) {
-            System.out.println("Discovery was interrupted...");
+            Assert.fail("Discovery was interrupted ...");
         }
         // we should get two result back
         assertEquals(results.size(),2);
@@ -133,7 +132,7 @@ public final class FilterSpecTestCase {
                 serviceURL = servicesQueue.takeService();
             } while (serviceURL != null) ;
         } catch (InterruptedException ie) {
-            System.out.println("Discovery was nterrupted ...");
+            Assert.fail("Discovery was interrupted ...");
         }
         // we should get one results back
         assertEquals(results.size(),1);
