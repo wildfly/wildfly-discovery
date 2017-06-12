@@ -55,7 +55,18 @@ public abstract class FilterSpec implements Serializable {
     public abstract boolean matchesMulti(Map<String, ? extends Collection<AttributeValue>> attributes);
 
     /**
-     * Determine whether this filter spec might match an attribute map containing all of the given keys.
+     * Determine whether this filter spec will always match an attribute map containing the given keys.
+     * This is simply the inverse of {@link #mayNotMatch(Collection)}.
+     *
+     * @param attributeNames the attribute names
+     * @return {@code true} if the filter will definitely match, {@code false} if it might not match
+     */
+    public final boolean willMatch(Collection<String> attributeNames) {
+        return ! mayNotMatch(attributeNames);
+    }
+
+    /**
+     * Determine whether this filter spec might match an attribute map containing the given keys.
      *
      * @param attributeNames the attribute names
      * @return {@code true} if the filter spec might match, {@code false} if it will definitely not match
@@ -63,12 +74,23 @@ public abstract class FilterSpec implements Serializable {
     public abstract boolean mayMatch(Collection<String> attributeNames);
 
     /**
-     * Determine whether this filter spec might not match an attribute map containing all of the given keys.
+     * Determine whether this filter spec might not match an attribute map containing the given keys.
      *
      * @param attributeNames the attribute names
      * @return {@code true} if the filter spec might not match, {@code false} if it will definitely match
      */
     public abstract boolean mayNotMatch(Collection<String> attributeNames);
+
+    /**
+     * Determine whether this filter spec will never match an attribute map containing the given keys.
+     * This is simply the inverse of {@link #mayMatch(Collection)}.
+     *
+     * @param attributeNames the attribute names
+     * @return {@code true} if the filter will definitely not match, {@code false} if it might match
+     */
+    public final boolean willNotMatch(Collection<String> attributeNames) {
+        return ! mayMatch(attributeNames);
+    }
 
     public abstract <P, R, E extends Exception> R accept(Visitor<P, R, E> visitor, P parameter) throws E;
 
