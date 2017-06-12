@@ -37,6 +37,9 @@ public final class ServiceDesignationTestCase {
         assertTrue(ServiceType.of("abstract", "ata").implies(ServiceType.of("abstract", "ata")));
         assertFalse(ServiceType.of("abstract", null).implies(ServiceType.of("abstract", "ata")));
         assertFalse(ServiceType.of("abstract", "ata").implies(ServiceType.of("abstract", null)));
+        assertTrue(ServiceType.of("abstract", "ata").implies(ServiceType.of("abstract", "ata", "foo", "bar")));
+        assertTrue(ServiceType.of("abstract", "ata", "scheme", "scheme-ata").implies(ServiceType.of("abstract", "ata", "scheme", "scheme-ata")));
+        assertFalse(ServiceType.of("abstract", "ata", "scheme", "scheme-ata").implies(ServiceType.of("abstract", "ata", "scheme2", "scheme-ata2")));
     }
 
     @Test

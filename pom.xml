@@ -32,7 +32,12 @@
         <version>22</version>
     </parent>
 
+    <properties>
+        <test.level>INFO</test.level>
+    </properties>
+
     <dependencies>
+        <!-- Build dependencies -->
         <dependency>
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
@@ -44,12 +49,28 @@
             <version>1.0.0.Beta4</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.3.0.Final</version>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
             <version>1.6.0.Beta5</version>
             <optional>true</optional>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Test dependencies -->
+
+        <!-- JBoss logging logmanager-->
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager</artifactId>
+            <version>2.0.5.Final</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>
@@ -58,4 +79,27 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>java.util.logging.manager</name>
+                            <value>org.jboss.logmanager.LogManager</value>
+                        </property>
+                        <property>
+                            <name>test.level</name>
+                            <value>${test.level}</value>
+                        </property>
+                    </systemProperties>
+                    <enableAssertions>true</enableAssertions>
+                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <trimStackTrace>false</trimStackTrace>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
