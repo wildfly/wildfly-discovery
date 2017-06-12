@@ -67,7 +67,7 @@ public final class AllFilterSpec extends FilterSpec implements Iterable<FilterSp
 
     public boolean mayNotMatch(final Collection<String> attributeNames) {
         for (FilterSpec child : children) {
-            if (! child.mayNotMatch(attributeNames)) {
+            if (child.mayNotMatch(attributeNames)) {
                 return true;
             }
         }

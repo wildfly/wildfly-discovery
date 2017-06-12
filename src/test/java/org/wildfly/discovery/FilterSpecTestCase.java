@@ -13,6 +13,9 @@ import org.wildfly.discovery.spi.DiscoveryProvider;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -69,18 +72,47 @@ public final class FilterSpecTestCase {
         // specify attribute=*
         FilterSpec attr = FilterSpec.hasAttribute("fred");
         assertEquals(attr.toString(),"(fred=*)");
+        assertTrue(attr.mayMatch(Collections.singleton("fred")));
+        assertFalse(attr.mayMatch(Collections.singleton("wilma")));
+        assertFalse(attr.mayNotMatch(Collections.singleton("fred")));
+        assertTrue(attr.mayNotMatch(Collections.singleton("wilma")));
 
         // specify attribute=X
         FilterSpec equals = FilterSpec.equal("fred","barney");
         assertEquals(equals.toString(),"(fred=barney)");
+        assertTrue(equals.mayMatch(Collections.singleton("fred")));
+        assertFalse(equals.mayMatch(Collections.singleton("wilma")));
+        assertTrue(equals.mayNotMatch(Collections.singleton("fred")));
+        assertTrue(equals.mayNotMatch(Collections.singleton("wilma")));
 
         // specify all
         FilterSpec all = FilterSpec.all(attr, equals);
         assertEquals(all.toString(),"(&(fred=*)(fred=barney))");
+        assertTrue(all.mayMatch(Collections.singleton("fred")));
+        assertFalse(all.mayMatch(Collections.singleton("wilma")));
+        assertTrue(all.mayNotMatch(Collections.singleton("fred")));
+        assertTrue(all.mayNotMatch(Collections.singleton("wilma")));
+
+        all = FilterSpec.fromString("(&(fred=one)(barney=two))");
+        assertEquals(all.toString(),"(&(fred=one)(barney=two))");
+        assertFalse(all.mayMatch(Collections.singleton("fred")));
+        assertFalse(all.mayMatch(Collections.singleton("barney")));
+        assertTrue(all.mayMatch(new HashSet<>(Arrays.asList("fred", "barney"))));
+        assertTrue(all.mayMatch(new HashSet<>(Arrays.asList("fred", "barney", "wilma"))));
+        assertFalse(all.mayMatch(new HashSet<>(Arrays.asList("fred", "wilma"))));
+        assertFalse(all.mayMatch(Collections.singleton("bob")));
+        assertTrue(all.mayNotMatch(Collections.singleton("fred")));
+        assertTrue(all.mayNotMatch(new HashSet<>(Arrays.asList("fred", "barney"))));
+        assertTrue(all.mayNotMatch(Collections.singleton("wilma")));
+        assertTrue(all.mayNotMatch(new HashSet<>(Arrays.asList("fred", "wilma"))));
 
         // specify any
         FilterSpec any = FilterSpec.any(attr, equals);
         assertEquals(any.toString(),"(|(fred=*)(fred=barney))");
+        assertTrue(any.mayMatch(Collections.singleton("fred")));
+        assertFalse(any.mayMatch(Collections.singleton("bob")));
+        assertFalse(any.mayNotMatch(Collections.singleton("fred")));
+        assertTrue(any.mayNotMatch(Collections.singleton("bob")));
     }
 
     /**
