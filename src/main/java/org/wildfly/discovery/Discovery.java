@@ -26,6 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.common.annotation.NotNull;
 import org.wildfly.common.context.ContextManager;
@@ -43,6 +44,7 @@ import org.wildfly.discovery.spi.DiscoveryResult;
  */
 public final class Discovery implements Contextual<Discovery> {
 
+    private static final Logger log = Logger.getLogger("org.wildfly.discovery");
     private static final ServiceURL END_MARK = new ServiceURL.Builder().setUri(URI.create("DUMMY:DUMMY")).create();
 
     private static final ContextManager<Discovery> CONTEXT_MANAGER;
@@ -91,7 +93,11 @@ public final class Discovery implements Contextual<Discovery> {
         Assert.checkNotNullParam("serviceType", serviceType);
         final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
         final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
-        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, new BlockingQueueDiscoveryResult(queue, problems)));
+        final DiscoveryResult result = new BlockingQueueDiscoveryResult(queue, problems);
+
+        log.tracef("Calling discover(%s, %s) with result instance %s\n", serviceType, (filterSpec == null ? "null" : filterSpec), result);
+
+        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, result));
     }
 
     /**
@@ -143,6 +149,8 @@ public final class Discovery implements Contextual<Discovery> {
         public void complete() {
             if (done.compareAndSet(false, true)) {
                 queue.add(END_MARK);
+
+                log.tracef("Called discover with result instance %s: queue = %s, problems = %s\n", this, queue, problems);
             }
         }
 
