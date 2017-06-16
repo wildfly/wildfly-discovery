@@ -20,6 +20,7 @@ package org.wildfly.discovery.spi;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.Discovery;
@@ -45,10 +46,11 @@ public interface BlockingDiscoveryProvider {
      *
      * @param serviceType the service type to match
      * @param filterSpec the service attribute filter expression, or {@code null} to return all matches
+     * @param predicate the predicate on ServiceURLs to satisfy or (@code null) to return all matches
      * @param result the discovery result
      * @throws InterruptedException if discovery was interrupted for some reason
      */
-    void discover(ServiceType serviceType, FilterSpec filterSpec, DiscoveryResult result) throws InterruptedException;
+    void discover(ServiceType serviceType, FilterSpec filterSpec, Predicate<ServiceURL> predicate, DiscoveryResult result) throws InterruptedException;
 
     /**
      * Convert this provider to a non-blocking provider which uses the given thread pool to dispatch discovery
@@ -60,14 +62,14 @@ public interface BlockingDiscoveryProvider {
      */
     default DiscoveryProvider toDiscoveryProvider(Executor executor) {
         Assert.checkNotNullParam("executor", executor);
-        return (serviceType, filterSpec, result) -> {
+        return (serviceType, filterSpec, predicate, result) -> {
             AtomicReference<Object> threadRef = new AtomicReference<>();
             try {
                 executor.execute(() -> {
                     try {
                         final Thread currentThread = Thread.currentThread();
                         if (threadRef.compareAndSet(null, currentThread)) try {
-                            BlockingDiscoveryProvider.this.discover(serviceType, filterSpec, result);
+                            BlockingDiscoveryProvider.this.discover(serviceType, filterSpec, predicate, result);
                         } catch (InterruptedException e) {
                             currentThread.interrupt();
                         } finally {

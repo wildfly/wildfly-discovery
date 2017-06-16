@@ -10,13 +10,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.discovery.impl.StaticDiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryProvider;
+import org.wildfly.discovery.Utils.AttributeValuePair;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Tests for FilterSpec functionality
@@ -40,15 +43,22 @@ public final class FilterSpecTestCase {
 
         // add some Service URLs
         AttributeValuePair clusterPair = new AttributeValuePair("cluster","c");
-        ServiceURL cluster = buildAttributeServiceURL(clusterPair);
+        // service:ejb.jboss:http://host:8080;cluster=c
+        ServiceURL cluster = Utils.buildServiceURL("ejb","jboss", new URL("http://host:8080").toURI(), clusterPair);
         list.add(cluster);
 
         AttributeValuePair modulePair = new AttributeValuePair("module","m");
-        ServiceURL module = buildAttributeServiceURL(modulePair);
+        // service:ejb.jboss:http://host:8080;module=m
+        ServiceURL module = Utils.buildServiceURL("ejb", "jboss", new URL("http://host:8080").toURI(), modulePair);
         list.add(module);
 
-        ServiceURL combo = buildAttributeServiceURL(clusterPair, modulePair);
+        // service:ejb.jboss:http://host:8080;cluster=c,module=m
+        ServiceURL combo = Utils.buildServiceURL("ejb", "jboss", new URL("http://host:8080").toURI(), clusterPair, modulePair);
         list.add(combo);
+
+        // service:ejb.jboss:http-remoting://host:8080
+        ServiceURL specialProtocol = Utils.buildServiceURL("ejb", "jboss", new URI("http-remoting", null, "host", 8080, null, null, null));
+        list.add(specialProtocol);
 
         // set up a DiscoveryProvider containing the ServiceURLs
         provider = new StaticDiscoveryProvider(list);
@@ -127,18 +137,37 @@ public final class FilterSpecTestCase {
         // call discovery for single attribute
         System.out.println("Calling discover for filterspec " + cluster);
         try (final ServicesQueue servicesQueue = discover(cluster)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
-            do {
-                System.out.println("ServiceURL found = " + serviceURL);
-                results.add(serviceURL);
-
-                serviceURL = servicesQueue.takeService();
-            } while (serviceURL != null) ;
+            Utils.drainServicesQueue(servicesQueue, results);
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted ...");
         }
         // we should get two result back
-        assertEquals(results.size(),2);
+        assertEquals("Should get two results back", 2, results.size());
+    }
+
+    /**
+     * A basic check on single attribute matching
+     */
+    @Test
+    public void testDiscoverySingleAttributeWithPredicate() {
+
+        FilterSpec cluster = FilterSpec.equal("cluster","c");
+        List<ServiceURL> results = new ArrayList<ServiceURL>();
+
+        // check for specific protocol versions
+        Predicate<ServiceURL> predicate = serviceURL -> {
+           return (serviceURL.getUriScheme().equals("http-remoting") || serviceURL.getUriScheme().equals("http+remoting"));
+        };
+
+        // call discovery for single attribute
+        System.out.println("Calling discover for filterspec " + cluster);
+        try (final ServicesQueue servicesQueue = discover(cluster, predicate)) {
+            Utils.drainServicesQueue(servicesQueue, results);
+        } catch (InterruptedException ie) {
+            Assert.fail("Discovery was interrupted ...");
+        }
+        // we should get one result back
+        assertEquals("Should get one result back", 1, results.size());
     }
 
     /**
@@ -151,25 +180,18 @@ public final class FilterSpecTestCase {
         FilterSpec module = FilterSpec.equal("module","m");
         FilterSpec all = FilterSpec.all(cluster,module);
 
-        List<ServiceURL> results = new ArrayList<ServiceURL>();
+        List<ServiceURL> results = null;
 
-        // call discovery for single attribute
+        // call discovery for multiple attribute
         System.out.println("Calling discover for filterspec " + all);
         try (final ServicesQueue servicesQueue = discover(all)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
-            do {
-                System.out.println("ServiceURL found = " + serviceURL);
-                results.add(serviceURL);
-
-                serviceURL = servicesQueue.takeService();
-            } while (serviceURL != null) ;
+            results = Utils.drainServicesQueue(servicesQueue);
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted ...");
         }
-        // we should get one results back
-        assertEquals(results.size(),1);
+        // we should get one result back
+        assertEquals("Should get one result back", 1, results.size());
     }
-
 
     /**
      * Do any test-specific tear down here.
@@ -189,53 +211,22 @@ public final class FilterSpecTestCase {
 
     /**
      * Returns a queue of registered ServiceURLs which match the filter spec
-     * @param filterSpec a condition on attributes to match
-     * @return
+     * @param filterSpec a condition on attributes to match (may be (@code null))
+     * @return ServicesQueue a ServicesQueue of ServiceURLs
      */
     private static ServicesQueue discover(FilterSpec filterSpec) {
         ServiceType serviceType = new ServiceType("ejb","jboss", null, null);
-        return discovery.discover(serviceType, filterSpec);
+        return discovery.discover(serviceType, filterSpec, p -> true);
     }
 
     /**
-     * An attribute value pair
+     * Returns a queue of registered ServiceURLs which match the filter spec
+     * @param filterSpec a condition on attributes to match (may be (@code null))
+     * @param predicate a predicate on ServiceURLs to satisfy (may be (@code null))
+     * @return ServicesQueue a ServicesQueue of ServiceURLs
      */
-    private static class AttributeValuePair {
-        String attribute = null;
-        String value = null;
-
-        public AttributeValuePair(String attribute, String value) {
-            this.attribute = attribute;
-            this.value = value;
-        }
-
-        public String getAttribute() {
-            return attribute;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
-    /**
-     * Builds ServiceURLs with constant default type and varying attributes.
-     *
-     * @param pairs one or more attribute pairs to be set in the ServiceURL
-     * @return a configured ServiceURL
-     * @throws Exception
-     */
-    private static ServiceURL buildAttributeServiceURL(AttributeValuePair ...pairs) throws Exception {
-
-        final ServiceURL.Builder builder = new ServiceURL.Builder();
-        // set the locationURI
-        builder.setUri(new URI("http://myhost.com"));
-        builder.setAbstractType("ejb");
-        builder.setAbstractTypeAuthority("jboss");
-        // add an attribute
-        for (AttributeValuePair pair : pairs) {
-            builder.addAttribute(pair.getAttribute(), AttributeValue.fromString(pair.getValue()));
-        }
-        return builder.create();
+    private static ServicesQueue discover(FilterSpec filterSpec, Predicate<ServiceURL> predicate) {
+        ServiceType serviceType = new ServiceType("ejb","jboss", null, null);
+        return discovery.discover(serviceType, filterSpec, predicate);
     }
 }

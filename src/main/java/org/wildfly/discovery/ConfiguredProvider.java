@@ -23,6 +23,8 @@ import org.wildfly.discovery.spi.DiscoveryRequest;
 import org.wildfly.discovery.spi.DiscoveryResult;
 import org.wildfly.discovery.spi.RegistryProvider;
 
+import java.util.function.Predicate;
+
 final class ConfiguredProvider implements DiscoveryProvider, RegistryProvider {
 
     private final DiscoveryProvider delegateDiscoveryProvider;
@@ -41,8 +43,8 @@ final class ConfiguredProvider implements DiscoveryProvider, RegistryProvider {
         return delegateRegistryProvider.registerService(serviceURL);
     }
 
-    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
-        return delegateDiscoveryProvider.discover(serviceType, filterSpec, result);
+    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final Predicate<ServiceURL> predicate, final DiscoveryResult result) {
+        return delegateDiscoveryProvider.discover(serviceType, filterSpec, predicate, result);
     }
 
     static final ConfiguredProvider INSTANCE = DiscoveryXmlParser.getConfiguredProvider();

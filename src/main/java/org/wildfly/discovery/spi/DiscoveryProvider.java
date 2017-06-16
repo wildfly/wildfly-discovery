@@ -22,6 +22,8 @@ import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
 import org.wildfly.discovery.ServiceURL;
 
+import java.util.function.Predicate;
+
 /**
  * A discovery provider.  This interface is implemented by all discovery provider implementations.
  *
@@ -42,14 +44,15 @@ public interface DiscoveryProvider {
      *
      * @param serviceType the service type to match
      * @param filterSpec the service attribute filter expression, or {@code null} to return all matches
+     * @param predicate the predicate on ServiceURLs to satisfy or (@code null) to return all matches
      * @param result the discovery result
      */
-    DiscoveryRequest discover(ServiceType serviceType, FilterSpec filterSpec, DiscoveryResult result);
+    DiscoveryRequest discover(ServiceType serviceType, FilterSpec filterSpec, Predicate<ServiceURL> predicate, DiscoveryResult result);
 
     /**
      * The empty discovery provider.
      */
-    DiscoveryProvider EMPTY = (serviceType, filterSpec, result) -> {
+    DiscoveryProvider EMPTY = (serviceType, filterSpec, predicate, result) -> {
         result.complete();
         return DiscoveryRequest.NULL;
     };

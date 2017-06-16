@@ -21,6 +21,7 @@ package org.wildfly.discovery.impl;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.FilterSpec;
@@ -49,13 +50,13 @@ public final class AggregateDiscoveryProvider implements DiscoveryProvider {
         this.delegates = delegates;
     }
 
-    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
+    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final Predicate<ServiceURL> predicate, final DiscoveryResult result) {
         final AtomicInteger count = new AtomicInteger(delegates.length);
         final DiscoveryRequest[] delegateRequests = new DiscoveryRequest[delegates.length];
         for (int i = 0, delegatesLength = delegates.length; i < delegatesLength; i++) {
             final DiscoveryProvider delegate = delegates[i];
             if (delegate != null) {
-                delegateRequests[i] = delegate.discover(serviceType, filterSpec, new AggregatingDiscoveryResult(result, count));
+                delegateRequests[i] = delegate.discover(serviceType, filterSpec, predicate, new AggregatingDiscoveryResult(result, count));
             } else {
                 handleComplete(count, result);
             }
