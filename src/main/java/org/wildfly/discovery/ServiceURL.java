@@ -21,9 +21,11 @@ package org.wildfly.discovery;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,12 +70,31 @@ public final class ServiceURL extends ServiceDesignation {
         private String abstractTypeAuthority;
         private URI uri;
         private String uriSchemeAuthority;
-        private List<Attr> attributes = new ArrayList<>();
+        private Map<String, LinkedHashSet<AttributeValue>> attributes;
 
         /**
          * Construct a new instance.
          */
         public Builder() {
+            attributes = new HashMap<>();
+        }
+
+        /**
+         * Construct a new instance from an original template.
+         *
+         * @param original the original service URL (must not be {@code null})
+         */
+        public Builder(ServiceURL original) {
+            abstractType = original.getAbstractType();
+            abstractTypeAuthority = original.getAbstractTypeAuthority();
+            uri = original.getLocationURI();
+            uriSchemeAuthority = original.getUriSchemeAuthority();
+            final Map<String, List<AttributeValue>> attributes = original.getAttributes();
+            Map<String, LinkedHashSet<AttributeValue>> map = new HashMap<>(attributes.size());
+            for (Map.Entry<String, List<AttributeValue>> entry : attributes.entrySet()) {
+                map.put(entry.getKey(), new LinkedHashSet<>(entry.getValue()));
+            }
+            this.attributes = map;
         }
 
         /**
@@ -183,7 +204,7 @@ public final class ServiceURL extends ServiceDesignation {
         public Builder addAttribute(final String name, final AttributeValue value) {
             Assert.checkNotNullParam("name", name);
             Assert.checkNotNullParam("value", value);
-            attributes.add(new Attr(name, value));
+            attributes.computeIfAbsent(name, n -> new LinkedHashSet<>()).add(value);
             return this;
         }
 
@@ -195,8 +216,59 @@ public final class ServiceURL extends ServiceDesignation {
          */
         public Builder addAttribute(final String name) {
             Assert.checkNotNullParam("name", name);
-            attributes.add(new Attr(name, null));
+            attributes.computeIfAbsent(name, n -> new LinkedHashSet<>()).add(null);
             return this;
+        }
+
+        /**
+         * Remove all values of the given attribute name.
+         *
+         * @param name the attribute name (must not be {@code null})
+         * @return the removed attribute values, or {@code null} if the attribute was not present in the builder
+         */
+        public List<AttributeValue> removeAttribute(final String name) {
+            Assert.checkNotNullParam("name", name);
+            final LinkedHashSet<AttributeValue> removed = attributes.remove(name);
+            if (removed == null) {
+                return Collections.emptyList();
+            }
+            final Iterator<AttributeValue> iterator = removed.iterator();
+            if (! iterator.hasNext()) {
+                return Collections.emptyList();
+            }
+            final AttributeValue first = iterator.next();
+            if (! iterator.hasNext()) {
+                return Collections.singletonList(first);
+            }
+            final ArrayList<AttributeValue> list = new ArrayList<>(removed.size());
+            list.add(first);
+            do {
+                list.add(iterator.next());
+            } while (iterator.hasNext());
+            return list;
+        }
+
+        /**
+         * Remove the given value of the given attribute name.
+         *
+         * @param name the attribute name (must not be {@code null})
+         * @param value the value to remove (must not be {@code null})
+         * @return {@code true} if the value was present, or {@code false} otherwise
+         */
+        public boolean removeAttributeValue(final String name, final AttributeValue value) {
+            Assert.checkNotNullParam("name", name);
+            Assert.checkNotNullParam("value", value);
+            final LinkedHashSet<AttributeValue> set = attributes.get(name);
+            if (set == null) {
+                return false;
+            }
+            if (set.remove(value)) {
+                if (set.isEmpty()) {
+                    attributes.remove(name, set);
+                }
+                return true;
+            }
+            return false;
         }
 
         /**
@@ -206,42 +278,20 @@ public final class ServiceURL extends ServiceDesignation {
          * @throws IllegalArgumentException if one or more builder property values is not acceptable
          */
         public ServiceURL create() {
-            final HashMap<String, List<AttributeValue>> map = new HashMap<>();
-            List<AttributeValue> list;
-            for (Attr attr : attributes) {
-                map.compute(attr.name, (name, val) -> {
-                    if (val != null) {
-                        if (val.size() == 1) {
-                            List<AttributeValue> result = new ArrayList<>(val);
-                            result.add(attr.value);
-                            return result;
-                        } else {
-                            val.add(attr.value);
-                            return val;
-                        }
-                    } else {
-                        return Collections.singletonList(attr.value);
-                    }
-                });
-            }
-            // ensure that every list here is unmodifiable so we can return them directly to the user
-            for (Map.Entry<String, List<AttributeValue>> entry : map.entrySet()) {
-                final List<AttributeValue> value = entry.getValue();
-                if (value.size() > 1) {
-                    ((ArrayList<AttributeValue>) value).trimToSize();
-                    entry.setValue(Collections.unmodifiableList(value));
-                }
+            final HashMap<String, List<AttributeValue>> map = new HashMap<>(attributes.size());
+            for (Map.Entry<String, LinkedHashSet<AttributeValue>> entry : attributes.entrySet()) {
+                map.put(entry.getKey(), unmodList(entry.getValue()));
             }
             return new ServiceURL(this, map);
         }
 
-        static class Attr {
-            final String name;
-            final AttributeValue value;
-
-            Attr(final String name, final AttributeValue value) {
-                this.name = name;
-                this.value = value;
+        static <T> List<T> unmodList(Collection<T> original) {
+            if (original.isEmpty()) {
+                return Collections.emptyList();
+            } else if (original.size() == 1) {
+                return Collections.singletonList(original.iterator().next());
+            } else {
+                return Collections.unmodifiableList(new ArrayList<>(original));
             }
         }
     }
@@ -548,5 +598,9 @@ public final class ServiceURL extends ServiceDesignation {
     public List<AttributeValue> getAttributeValues(String name) {
         Assert.checkNotNullParam("name", name);
         return attributes.getOrDefault(name, Collections.emptyList());
+    }
+
+    Map<String, List<AttributeValue>> getAttributes() {
+        return attributes;
     }
 }
