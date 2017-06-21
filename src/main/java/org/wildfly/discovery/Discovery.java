@@ -25,6 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
@@ -86,18 +87,19 @@ public final class Discovery implements Contextual<Discovery> {
      * facilitate simple usage in a {@code try}-with-resources block.
      *
      * @param serviceType the abstract or concrete type of service to search for
-     * @param filterSpec the service filter specification
+     * @param filterSpec the service filter specification or (@code null) to return all matches
+     * @param predicate the predicate on ServiceURLs to satisfy or (@code null) to return all matches
      * @return the services queue
      */
-    public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec) {
+    public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec, Predicate<ServiceURL> predicate) {
         Assert.checkNotNullParam("serviceType", serviceType);
         final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
         final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
         final DiscoveryResult result = new BlockingQueueDiscoveryResult(queue, problems);
 
-        log.tracef("Calling discover(%s, %s) with result instance %s\n", serviceType, (filterSpec == null ? "null" : filterSpec), result);
+        log.tracef("Calling discover(%s, %s, %s) with result instance %s\n", serviceType, (filterSpec == null ? "null" : filterSpec), (predicate == null ? "null" : predicate), result);
 
-        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, result));
+        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, predicate, result));
     }
 
     /**

@@ -19,6 +19,7 @@
 package org.wildfly.discovery.impl;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
@@ -45,10 +46,10 @@ public final class StaticDiscoveryProvider implements DiscoveryProvider {
     }
 
     @Override
-    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
+    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final Predicate<ServiceURL> predicate, final DiscoveryResult result) {
         try {
             for (ServiceURL service : services) {
-                if (serviceType.implies(service) && (filterSpec == null || service.satisfies(filterSpec))) {
+                if (serviceType.implies(service) && (filterSpec == null || service.satisfies(filterSpec)) && (predicate == null || predicate.test(service)) ) {
                     result.addMatch(service);
                 }
             }

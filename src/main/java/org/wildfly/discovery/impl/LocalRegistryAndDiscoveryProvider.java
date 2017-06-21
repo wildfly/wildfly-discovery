@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.AggregateServiceRegistration;
@@ -64,14 +65,14 @@ public final class LocalRegistryAndDiscoveryProvider implements RegistryProvider
         return new AggregateHandle(list, array);
     }
 
-    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
+    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final Predicate<ServiceURL> predicate, final DiscoveryResult result) {
         ServiceURL serviceURL;
         for (Handle handle : handles) {
             if (! handle.isOpenAndActive()) {
                 continue;
             }
             serviceURL = handle.getServiceURL();
-            if (serviceType.implies(serviceURL) && serviceURL.satisfies(filterSpec)) {
+            if (serviceType.implies(serviceURL) && (serviceURL == null || serviceURL.satisfies(filterSpec)) && (predicate == null || predicate.test(serviceURL))) {
                 result.addMatch(serviceURL);
             }
         }

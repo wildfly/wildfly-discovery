@@ -29,8 +29,8 @@ public class ParsingTestCase {
         Discovery discovery = Discovery.getContextManager().getPrivilegedSupplier().get();
 
         // ServiceTypes that we defined in the configuration file
-        ServiceType nodeServiceType = new ServiceType("ejb", "jboss", "node:myNode", null);
-        ServiceType URIServiceType = new ServiceType("ejb", "jboss", "http-remoting://15.16.17.18:8080", null);
+        ServiceType nodeServiceType = new ServiceType("ejb", "jboss", "node", null);
+        ServiceType URIServiceType = new ServiceType("ejb", "jboss", "http-remoting", null);
 
         // some filter specs to retrieve the SeviceURLs
         FilterSpec cluster = FilterSpec.equal("cluster","myCluster");
@@ -40,12 +40,8 @@ public class ParsingTestCase {
 
         // call discovery to retrieve the abstract node we defined
         List<ServiceURL> nodeResults = new ArrayList<ServiceURL>();
-        try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, cluster)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
-            while (serviceURL != null) {
-                nodeResults.add(serviceURL);
-                serviceURL = servicesQueue.takeService();
-            }
+        try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, cluster, serviceURL -> true)) {
+            Utils.drainServicesQueue(servicesQueue, nodeResults);
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted!");
         }
@@ -55,12 +51,8 @@ public class ParsingTestCase {
 
         // call discovery to retrieve the concrete URI we defined
         List<ServiceURL> URIResults = new ArrayList<ServiceURL>();
-        try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, node)) {
-            ServiceURL serviceURL = servicesQueue.takeService();
-            while (serviceURL != null)  {
-                URIResults.add(serviceURL);
-                serviceURL = servicesQueue.takeService();
-            }
+        try (final ServicesQueue servicesQueue = discovery.discover(basicServiceType, node, serviceURL -> true)) {
+            Utils.drainServicesQueue(servicesQueue, URIResults);
         } catch (InterruptedException ie) {
             Assert.fail("Discovery was interrupted!");
         }

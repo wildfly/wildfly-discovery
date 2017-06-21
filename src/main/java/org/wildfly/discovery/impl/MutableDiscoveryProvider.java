@@ -19,10 +19,12 @@
 package org.wildfly.discovery.impl;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
 import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
+import org.wildfly.discovery.ServiceURL;
 import org.wildfly.discovery.spi.DiscoveryProvider;
 import org.wildfly.discovery.spi.DiscoveryRequest;
 import org.wildfly.discovery.spi.DiscoveryResult;
@@ -62,7 +64,7 @@ public final class MutableDiscoveryProvider implements DiscoveryProvider {
         delegateRef.set(delegateProvider);
     }
 
-    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
-        return delegateRef.get().discover(serviceType, filterSpec, result);
+    public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final Predicate<ServiceURL> predicate, final DiscoveryResult result) {
+        return delegateRef.get().discover(serviceType, filterSpec, predicate, result);
     }
 }
