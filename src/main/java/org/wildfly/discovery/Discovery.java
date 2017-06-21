@@ -95,7 +95,7 @@ public final class Discovery implements Contextual<Discovery> {
         final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
         final DiscoveryResult result = new BlockingQueueDiscoveryResult(queue, problems);
 
-        log.tracef("Calling discover(%s, %s) with result instance %s\n", serviceType, (filterSpec == null ? "null" : filterSpec), result);
+        log.tracef("Calling discover(%s, %s) with result instance %s\n", serviceType, filterSpec, result);
 
         return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, result));
     }
@@ -150,19 +150,23 @@ public final class Discovery implements Contextual<Discovery> {
             if (done.compareAndSet(false, true)) {
                 queue.add(END_MARK);
 
-                log.tracef("Called discover with result instance %s: queue = %s, problems = %s\n", this, queue, problems);
+                log.tracef("Discovery complete on %s\n", this);
             }
         }
 
         public void reportProblem(final Throwable description) {
             Assert.checkNotNullParam("description", description);
             problems.add(description);
+            log.tracef(description, "Reported problem on %s", this);
         }
 
         public void addMatch(final ServiceURL serviceURL) {
             if (serviceURL != null && ! done.get()) {
+                log.tracef("Adding service URL match \"%s\" to %s", serviceURL, this);
                 // if the queue is full, drop
                 queue.offer(serviceURL);
+            } else {
+                log.tracef("Ignoring service URL match \"%s\" to %s", serviceURL, this);
             }
         }
     }
