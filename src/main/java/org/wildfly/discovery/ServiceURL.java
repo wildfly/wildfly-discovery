@@ -29,6 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.wildfly.common.Assert;
 
@@ -50,6 +51,7 @@ public final class ServiceURL extends ServiceDesignation {
 
     private final Map<String, List<AttributeValue>> attributes;
 
+    private transient Set<String> attributeNames;
     private transient int hashCode;
     private transient String toString;
     private transient URI toServiceURI;
@@ -598,6 +600,18 @@ public final class ServiceURL extends ServiceDesignation {
     public List<AttributeValue> getAttributeValues(String name) {
         Assert.checkNotNullParam("name", name);
         return attributes.getOrDefault(name, Collections.emptyList());
+    }
+
+    /**
+     * Get the attribute names.  If no attributes exist, an empty set is returned.
+     * @return an unmodifiable set of attribute names (not {@code null})
+     */
+    public Set<String> getAttributeNames() {
+        Set<String> attributeNames = this.attributeNames;
+        if (attributeNames == null) {
+            attributeNames = this.attributeNames = Collections.unmodifiableSet(this.attributes.keySet());
+        }
+        return attributeNames;
     }
 
     Map<String, List<AttributeValue>> getAttributes() {
