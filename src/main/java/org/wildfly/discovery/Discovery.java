@@ -101,6 +101,21 @@ public final class Discovery implements Contextual<Discovery> {
     }
 
     /**
+     * Perform a service discovery.  The returned services queue is populated as discovery answers become available.
+     * Answers may be cached within each provider.  The order of answers is not significant and can vary from call to
+     * call, especially with asynchronous discovery mechanisms.  The returned service queue may be closed to indicate
+     * no further interest in query answers, and for this purpose it implements {@link AutoCloseable} in order to
+     * facilitate simple usage in a {@code try}-with-resources block.
+     *
+     * @param description the service description (must not be {@code null})
+     * @return the services queue
+     */
+    public ServicesQueue discover(ServiceDescription description) {
+        Assert.checkNotNullParam("description", description);
+        return discover(description.getServiceType(), description.getFilterSpec());
+    }
+
+    /**
      * Create a discovery object with the given providers.  The given {@code providers} argument and its array
      * elements may not be {@code null}.
      *

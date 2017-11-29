@@ -147,20 +147,23 @@ public final class ServiceType extends ServiceDesignation {
     public String toString() {
         String toString = this.toString;
         if (toString == null) {
-            final StringBuilder b = new StringBuilder(32);
-            b.append("service:").append(abstractType);
-            if (abstractTypeAuthority != null) {
-                b.append('.').append(abstractTypeAuthority);
-            }
-            if (uriScheme != null) {
-                b.append(':').append(uriScheme);
-                if (uriSchemeAuthority != null) {
-                    b.append('.').append(uriSchemeAuthority);
-                }
-            }
-            toString = this.toString = b.toString();
+            toString = this.toString = toString(new StringBuilder(32)).toString();
         }
         return toString;
+    }
+
+    StringBuilder toString(StringBuilder b) {
+        b.append("service:").append(abstractType);
+        if (abstractTypeAuthority != null) {
+            b.append('.').append(abstractTypeAuthority);
+        }
+        if (uriScheme != null) {
+            b.append(':').append(uriScheme);
+            if (uriSchemeAuthority != null) {
+                b.append('.').append(uriSchemeAuthority);
+            }
+        }
+        return b;
     }
 
     /**
