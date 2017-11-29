@@ -32,10 +32,12 @@ final class NumericAttributeValue extends AttributeValue {
         this.value = value;
     }
 
+    @Override
     String generateToString() {
         return Integer.toString(value);
     }
 
+    @Override
     public int compareTo(final AttributeValue other) {
         if (other instanceof NumericAttributeValue) {
             return signum(value - ((NumericAttributeValue) other).value);
@@ -44,10 +46,12 @@ final class NumericAttributeValue extends AttributeValue {
         }
     }
 
+    @Override
     public boolean equals(final Object obj) {
         return obj instanceof NumericAttributeValue && equals((NumericAttributeValue) obj);
     }
 
+    @Override
     public boolean equals(final AttributeValue obj) {
         return obj instanceof NumericAttributeValue && equals((NumericAttributeValue) obj);
     }
@@ -56,15 +60,23 @@ final class NumericAttributeValue extends AttributeValue {
         return obj == this || obj != null && value == obj.value;
     }
 
+    @Override
     public int hashCode() {
         return value;
     }
 
+    @Override
     int getKind() {
         return K_NUMERIC;
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
+    }
+
+    @Override
+    public int asInt() {
+        return this.value;
     }
 }
