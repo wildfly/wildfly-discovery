@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public final class HasFilterSpec extends FilterSpec {
     private final String attribute;
+    private transient int hashCode;
 
     public HasFilterSpec(final String attribute) {
         this.attribute = attribute;
@@ -58,6 +59,24 @@ public final class HasFilterSpec extends FilterSpec {
      */
     public String getAttribute() {
         return attribute;
+    }
+
+    public boolean equals(final FilterSpec other) {
+        return other instanceof HasFilterSpec && equals((HasFilterSpec) other);
+    }
+
+    public boolean equals(final HasFilterSpec other) {
+        return this == other || other != null && attribute.equals(other.attribute);
+    }
+
+    public int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = getClass().hashCode() * 19 + attribute.hashCode();
+            if (hashCode == 0) hashCode = 1 << 30;
+            return this.hashCode = hashCode;
+        }
+        return hashCode;
     }
 
     void toString(final StringBuilder builder) {

@@ -29,6 +29,7 @@ public final class SubstringFilterSpec extends FilterSpec {
     private final String attribute;
     private final String initialPart;
     private final String finalPart;
+    private transient int hashCode;
 
     SubstringFilterSpec(final String attribute, final String initialPart, final String finalPart) {
         this.attribute = attribute;
@@ -89,6 +90,24 @@ public final class SubstringFilterSpec extends FilterSpec {
      */
     public String getFinalPart() {
         return finalPart;
+    }
+
+    public int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = (attribute.hashCode() * 19 + initialPart.hashCode()) * 19 + finalPart.hashCode();
+            if (hashCode == 0) hashCode = 1 << 30;
+            return this.hashCode = hashCode;
+        }
+        return hashCode;
+    }
+
+    public boolean equals(final FilterSpec other) {
+        return other instanceof SubstringFilterSpec && equals((SubstringFilterSpec) other);
+    }
+
+    public boolean equals(final SubstringFilterSpec other) {
+        return this == other || other != null && attribute.equals(other.attribute) && initialPart.equals(other.initialPart) && finalPart.equals(other.finalPart);
     }
 
     void toString(final StringBuilder builder) {

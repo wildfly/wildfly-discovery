@@ -18,6 +18,7 @@
 
 package org.wildfly.discovery;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ListIterator;
 import java.util.Map;
@@ -30,6 +31,7 @@ import java.util.Map;
 public final class AllFilterSpec extends FilterSpec implements Iterable<FilterSpec> {
 
     private final FilterSpec[] children;
+    private transient int hashCode;
 
     AllFilterSpec(final FilterSpec... specs) {
         if (specs.length == 0) {
@@ -88,5 +90,23 @@ public final class AllFilterSpec extends FilterSpec implements Iterable<FilterSp
 
     public ListIterator<FilterSpec> iterator() {
         return new ArrayIterator<FilterSpec>(children);
+    }
+
+    public int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = getClass().hashCode() * 19 + Arrays.hashCode(children);
+            if (hashCode == 0) hashCode = 1 << 30;
+            return this.hashCode = hashCode;
+        }
+        return hashCode;
+    }
+
+    public boolean equals(final FilterSpec obj) {
+        return obj instanceof AllFilterSpec && equals((AllFilterSpec) obj);
+    }
+
+    public boolean equals(final AllFilterSpec obj) {
+        return this == obj || obj != null && Arrays.deepEquals(children, obj.children);
     }
 }

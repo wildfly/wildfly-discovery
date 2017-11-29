@@ -719,6 +719,12 @@ public abstract class FilterSpec implements Serializable {
         }
     }
 
+    public final boolean equals(final Object obj) {
+        return obj instanceof FilterSpec && equals((FilterSpec) obj);
+    }
+
+    public abstract boolean equals(final FilterSpec other);
+
     /**
      * Get the string representation of this filter.
      *

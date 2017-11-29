@@ -57,6 +57,18 @@ public final class BooleanFilterSpec extends FilterSpec {
         return value;
     }
 
+    public int hashCode() {
+        return Boolean.hashCode(value);
+    }
+
+    public boolean equals(final FilterSpec other) {
+        return this == other;
+    }
+
+    public boolean equals(final BooleanFilterSpec other) {
+        return this == other;
+    }
+
     void toString(final StringBuilder builder) {
         if (value) {
             builder.append("*");

@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public final class NotFilterSpec extends FilterSpec {
     private final FilterSpec child;
+    private transient int hashCode;
 
     NotFilterSpec(final FilterSpec child) {
         this.child = child;
@@ -58,6 +59,24 @@ public final class NotFilterSpec extends FilterSpec {
      */
     public FilterSpec getChild() {
         return child;
+    }
+
+    public int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = getClass().hashCode() * 19 + child.hashCode();
+            if (hashCode == 0) hashCode = 1 << 30;
+            return this.hashCode = hashCode;
+        }
+        return hashCode;
+    }
+
+    public boolean equals(final FilterSpec other) {
+        return other instanceof NotFilterSpec && equals((NotFilterSpec) other);
+    }
+
+    public boolean equals(final NotFilterSpec other) {
+        return this == other || other != null && child.equals(other.child);
     }
 
     void toString(final StringBuilder builder) {
