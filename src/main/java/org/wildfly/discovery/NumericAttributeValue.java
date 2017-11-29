@@ -67,4 +67,9 @@ final class NumericAttributeValue extends AttributeValue {
     public boolean isNumeric() {
         return true;
     }
+
+    @Override
+    public int asInt() {
+        return this.value;
+    }
 }
