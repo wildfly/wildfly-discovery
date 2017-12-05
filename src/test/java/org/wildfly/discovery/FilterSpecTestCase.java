@@ -113,6 +113,34 @@ public final class FilterSpecTestCase {
         assertFalse(any.mayMatch(Collections.singleton("bob")));
         assertFalse(any.mayNotMatch(Collections.singleton("fred")));
         assertTrue(any.mayNotMatch(Collections.singleton("bob")));
+
+        FilterSpec emptyAll = FilterSpec.all();
+        assertEquals("(&)", emptyAll.toString());
+        emptyAll = FilterSpec.fromString("(&)");
+        assertEquals("(&)", emptyAll.toString());
+        emptyAll = FilterSpec.fromString("*");
+        assertEquals("(&)", emptyAll.toString());
+
+        FilterSpec emptyNotAll = FilterSpec.not(FilterSpec.all());
+        assertEquals("(!(&))", emptyNotAll.toString());
+        emptyNotAll = FilterSpec.fromString("(!(&))");
+        assertEquals("(!(&))", emptyNotAll.toString());
+        emptyNotAll = FilterSpec.fromString("(!*)");
+        assertEquals("(!(&))", emptyNotAll.toString());
+
+        FilterSpec emptyAny = FilterSpec.none();
+        assertEquals("(|)", emptyAny.toString());
+        emptyAny = FilterSpec.fromString("(|)");
+        assertEquals("(|)", emptyAny.toString());
+        emptyAny = FilterSpec.fromString("!*");
+        assertEquals("(|)", emptyAny.toString());
+
+        FilterSpec emptyNotAny = FilterSpec.not(FilterSpec.none());
+        assertEquals("(!(|))", emptyNotAny.toString());
+        emptyNotAny = FilterSpec.fromString("(!(|))");
+        assertEquals("(!(|))", emptyNotAny.toString());
+        emptyNotAny = FilterSpec.fromString("(!!*)");
+        assertEquals("(!(|))", emptyNotAny.toString());
     }
 
     /**

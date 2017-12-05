@@ -59,9 +59,9 @@ public final class BooleanFilterSpec extends FilterSpec {
 
     void toString(final StringBuilder builder) {
         if (value) {
-            builder.append("*");
+            builder.append("(&)");
         } else {
-            builder.append("!*");
+            builder.append("(|)");
         }
     }
 }

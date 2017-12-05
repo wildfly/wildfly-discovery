@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.wildfly.common.Assert;
@@ -100,24 +99,6 @@ public abstract class FilterSpec implements Serializable {
 
     private static final FilterSpec[] NONE = new FilterSpec[0];
 
-    private static FilterSpec[] safeToArray(Collection<FilterSpec> collection) {
-        return safeToArray(collection.iterator(), 0);
-    }
-
-    private static FilterSpec[] safeToArray(Iterator<FilterSpec> it, int idx) {
-        final FilterSpec[] array;
-        while (it.hasNext()) {
-            FilterSpec next = it.next();
-            if (next != null) {
-                array = safeToArray(it, idx + 1);
-                array[idx] = next;
-                return array;
-            }
-        }
-        array = idx == 0 ? NONE : new FilterSpec[idx];
-        return array;
-    }
-
     private static final FilterSpec TRUE = new BooleanFilterSpec(true);
     private static final FilterSpec FALSE = new BooleanFilterSpec(false);
 
@@ -139,8 +120,11 @@ public abstract class FilterSpec implements Serializable {
     }
 
     private static FilterSpec parseFilter(StringIterator i) {
-        if (i.next() != '(') {
-            throw i.unexpectedCharacter();
+        switch (i.next()) {
+            case '*': return all();
+            case '!': if (i.next() != '*') throw i.unexpectedCharacter(); else return none();
+            case '(': break;
+            default: throw i.unexpectedCharacter();
         }
         switch (i.peek()) {
             case '&': {
@@ -503,7 +487,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec all(FilterSpec... specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new AllFilterSpec(specs.clone());
+        return all(specs, true);
     }
 
     /**
@@ -514,7 +498,11 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec all(Collection<FilterSpec> specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new AllFilterSpec(safeToArray(specs));
+        return all(specs.toArray(NONE), false);
+    }
+
+    private static FilterSpec all(FilterSpec[] specs, boolean clone) {
+        return specs.length == 0 ? all() : new AllFilterSpec(clone ? specs.clone() : specs);
     }
 
     /**
@@ -525,7 +513,7 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec any(FilterSpec... specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new AnyFilterSpec(specs.clone());
+        return any(specs, true);
     }
 
     /**
@@ -536,7 +524,11 @@ public abstract class FilterSpec implements Serializable {
      */
     public static FilterSpec any(Collection<FilterSpec> specs) {
         Assert.checkNotNullParam("specs", specs);
-        return new AnyFilterSpec(safeToArray(specs));
+        return any(specs.toArray(NONE), false);
+    }
+
+    private static FilterSpec any(FilterSpec[] specs, boolean clone) {
+        return specs.length == 0 ? none() : new AnyFilterSpec(clone ? specs.clone() : specs);
     }
 
     /**
