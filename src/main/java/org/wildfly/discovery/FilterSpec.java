@@ -733,7 +733,7 @@ public abstract class FilterSpec implements Serializable {
         return new Serialized(toString());
     }
 
-    class Serialized implements Serializable {
+    static class Serialized implements Serializable {
 
         private static final long serialVersionUID = 555689132344539984L;
 
