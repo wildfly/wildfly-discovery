@@ -98,6 +98,15 @@ public interface ServicesQueue extends AutoCloseable {
     ServiceURL takeService() throws InterruptedException;
 
     /**
+     * Get the next entry from the queue, blocking until one is available or timeout expires.  Returns
+     * {@code null} if the queue is finished (all services have been read).
+     *
+     * @return the next service URL, or {@code null} if the queue is finished
+     * @throws InterruptedException if the calling thread was interrupted while waiting for the next entry
+     */
+    ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException;
+
+    /**
      * Query whether this queue is finished (all services have been read).
      *
      * @return {@code true} if the queue is finished, {@code false} otherwise
@@ -162,6 +171,12 @@ public interface ServicesQueue extends AutoCloseable {
 
             public ServiceURL takeService() throws InterruptedException {
                 await();
+                return pollService();
+            }
+
+            @Override
+            public ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
+                await(timeout, timeUnit);
                 return pollService();
             }
 

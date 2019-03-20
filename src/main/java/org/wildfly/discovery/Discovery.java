@@ -90,14 +90,36 @@ public final class Discovery implements Contextual<Discovery> {
      * @return the services queue
      */
     public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec) {
+        return discover(serviceType, filterSpec, Long.MAX_VALUE, TimeUnit.DAYS);
+    }
+
+    /**
+     * Perform a service discovery.  The returned services queue is populated as discovery answers become available.
+     * Answers may be cached within each provider.  The order of answers is not significant and can vary from call to
+     * call, especially with asynchronous discovery mechanisms.  The returned service queue may be closed to indicate
+     * no further interest in query answers, and for this purpose it implements {@link AutoCloseable} in order to
+     * facilitate simple usage in a {@code try}-with-resources block.
+     *
+     * This method allows a timeout to be specified.
+     *
+     * @param serviceType the abstract or concrete type of service to search for
+     * @param filterSpec the service filter specification
+     * @param timeout the timeout duration
+     * @param timeUnit the unit of time for the timeout
+     * @return the services queue
+     */
+    public ServicesQueue discover(ServiceType serviceType, FilterSpec filterSpec, long timeout, TimeUnit timeUnit) {
+        Assert.checkMinimumParameter("timeout", 1, timeout);
+        Assert.assertNotNull(timeUnit);
+
         Assert.checkNotNullParam("serviceType", serviceType);
         final LinkedBlockingQueue<ServiceURL> queue = new LinkedBlockingQueue<>();
         final CopyOnWriteArrayList<Throwable> problems = new CopyOnWriteArrayList<>();
         final DiscoveryResult result = new BlockingQueueDiscoveryResult(queue, problems);
 
-        log.tracef("Calling discover(%s, %s) with result instance %s\n", serviceType, filterSpec, result);
+        log.tracef("Calling discover(%s, %s) with result instance %s and timeout of %s %s\n", serviceType, filterSpec, result, timeout, timeUnit);
 
-        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, result));
+        return new BlockingQueueServicesQueue(queue, problems, provider.discover(serviceType, filterSpec, result), timeout, timeUnit);
     }
 
     /**
@@ -175,13 +197,21 @@ public final class Discovery implements Contextual<Discovery> {
         private final LinkedBlockingQueue<ServiceURL> queue;
         private final CopyOnWriteArrayList<Throwable> problems;
         private final DiscoveryRequest request;
+        private final long timeout;
+        private final TimeUnit timeUnit;
         private ServiceURL next;
         private boolean done;
 
         BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request) {
+            this(queue, problems, request, Long.MAX_VALUE, TimeUnit.DAYS);
+        }
+
+        BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request, final long time, final TimeUnit timeUnit) {
             this.queue = queue;
             this.problems = problems;
             this.request = request;
+            this.timeout = time;
+            this.timeUnit = timeUnit;
         }
 
         public void await() throws InterruptedException {
@@ -228,6 +258,13 @@ public final class Discovery implements Contextual<Discovery> {
 
         public ServiceURL takeService() throws InterruptedException {
             await();
+            return pollService();
+        }
+
+        @Override
+        public ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            if (timeout <= 0) timeout = Long.MAX_VALUE;
+            await(timeout, timeUnit);
             return pollService();
         }
 
