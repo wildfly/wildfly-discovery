@@ -23,6 +23,8 @@ import org.wildfly.discovery.spi.DiscoveryRequest;
 import org.wildfly.discovery.spi.DiscoveryResult;
 import org.wildfly.discovery.spi.RegistryProvider;
 
+import java.net.URI;
+
 final class ConfiguredProvider implements DiscoveryProvider, RegistryProvider {
 
     private final DiscoveryProvider delegateDiscoveryProvider;
@@ -43,6 +45,10 @@ final class ConfiguredProvider implements DiscoveryProvider, RegistryProvider {
 
     public DiscoveryRequest discover(final ServiceType serviceType, final FilterSpec filterSpec, final DiscoveryResult result) {
         return delegateDiscoveryProvider.discover(serviceType, filterSpec, result);
+    }
+
+    public void processMissingTarget(URI location, Exception cause) {
+        delegateDiscoveryProvider.processMissingTarget(location, cause);
     }
 
     static final ConfiguredProvider INSTANCE = DiscoveryXmlParser.getConfiguredProvider();

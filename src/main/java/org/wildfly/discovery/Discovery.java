@@ -137,6 +137,10 @@ public final class Discovery implements Contextual<Discovery> {
         return discover(description.getServiceType(), description.getFilterSpec());
     }
 
+    public void processMissingTarget(URI location, Exception cause){
+        provider.processMissingTarget(location, cause);
+    }
+
     /**
      * Create a discovery object with the given providers.  The given {@code providers} argument and its array
      * elements may not be {@code null}.

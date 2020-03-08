@@ -22,6 +22,8 @@ import org.wildfly.discovery.FilterSpec;
 import org.wildfly.discovery.ServiceType;
 import org.wildfly.discovery.ServiceURL;
 
+import java.net.URI;
+
 /**
  * A discovery provider.  This interface is implemented by all discovery provider implementations.
  *
@@ -45,6 +47,16 @@ public interface DiscoveryProvider {
      * @param result the discovery result
      */
     DiscoveryRequest discover(ServiceType serviceType, FilterSpec filterSpec, DiscoveryResult result);
+
+    /**
+     * This method is invoked on provider if the invocation using discovered URI was not successful. This method is
+     * supposed to be used by lazy discovery algorithms. By default, it is set to empty method so it could be skipped
+     * by providers implementing polling algorithms.
+     * @param location location on which invocations has failed
+     * @param cause the cause of the failure
+     */
+    default void processMissingTarget(URI location, Exception cause) {
+    }
 
     /**
      * The empty discovery provider.
