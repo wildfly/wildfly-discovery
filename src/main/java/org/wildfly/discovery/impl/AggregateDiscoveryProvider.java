@@ -69,6 +69,14 @@ public final class AggregateDiscoveryProvider implements DiscoveryProvider {
         }
     }
 
+    public void processMissingTarget(URI location, Exception cause) {
+        for (DiscoveryProvider delegate : delegates) {
+            if (delegate != null) {
+                delegate.processMissingTarget(location, cause);
+            }
+        }
+    }
+
     static class AggregatingDiscoveryRequest implements DiscoveryRequest {
         private final DiscoveryRequest[] delegateRequests;
 
