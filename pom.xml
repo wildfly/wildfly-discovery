@@ -104,7 +104,7 @@
                         </property>
                     </systemProperties>
                     <enableAssertions>true</enableAssertions>
-                    <redirectTestOutputToFile>false</redirectTestOutputToFile>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <trimStackTrace>false</trimStackTrace>
                 </configuration>
             </plugin>
