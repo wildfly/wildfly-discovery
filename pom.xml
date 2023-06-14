@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.wildfly.client</groupId>
             <artifactId>wildfly-client-config</artifactId>
-            <version>1.0.0.Final</version>
+            <version>1.0.1.Final</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
