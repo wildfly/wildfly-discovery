@@ -41,7 +41,7 @@ public final class LessEqualFilterSpec extends FilterSpec {
     }
 
     public boolean matchesMulti(final Map<String, ? extends Collection<AttributeValue>> attributes) {
-        final Collection<AttributeValue> collection = attributes.get(attributes);
+        final Collection<AttributeValue> collection = attributes.get(attribute);
         if (collection != null) for (AttributeValue value : collection) {
             if (this.value.compareTo(value) <= 0) {
                 return true;
