@@ -49,9 +49,15 @@ public final class Discovery implements Contextual<Discovery> {
 
     private static final ContextManager<Discovery> CONTEXT_MANAGER;
 
+    protected static int discoveryCancellationDelay = 0;
+
     static {
         CONTEXT_MANAGER = new ContextManager<Discovery>(Discovery.class, "org.wildfly.discovery");
         CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> create(ConfiguredProvider.INSTANCE));
+
+        String delay = System.getProperty("wildfly.discovery.cancellation.delay");
+        if (delay != null)
+            discoveryCancellationDelay = Integer.valueOf(delay);
     }
 
     private final DiscoveryProvider provider;
@@ -292,9 +298,22 @@ public final class Discovery implements Contextual<Discovery> {
         }
 
         public void close() {
-            if (! isFinished()) {
-                request.cancel();
-            }
+
+                Thread canceller = new Thread(){
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(discoveryCancellationDelay);
+                        } catch(InterruptedException e){
+
+                        }
+                        if (! isFinished()) {
+                            request.cancel();
+                        }
+                    }
+                };
+                canceller.start();
+
         }
 
         @NotNull
