@@ -292,9 +292,6 @@ public final class Discovery implements Contextual<Discovery> {
         }
 
         public void close() {
-            if (! isFinished()) {
-                request.cancel();
-            }
         }
 
         @NotNull
