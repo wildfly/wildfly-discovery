@@ -42,8 +42,6 @@
 
     <properties>
         <test.level>INFO</test.level>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
         <maven.repository.url>https://repository.jboss.org/nexus/content/groups/public/</maven.repository.url>
     </properties>
 
