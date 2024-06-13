@@ -2,6 +2,7 @@ package org.wildfly.discovery;
 
 import static org.junit.Assert.*;
 
+import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -24,6 +25,8 @@ import java.util.List;
  * @author <a href="mailto:rachmato@redhat.com">Richard Achmatowicz</a>
  */
 public final class FilterSpecTestCase {
+
+    private static final Logger logger = Logger.getLogger(FilterSpecTestCase.class);
 
     private static DiscoveryProvider provider = null;
     private static Discovery discovery = null;
@@ -153,11 +156,11 @@ public final class FilterSpecTestCase {
         List<ServiceURL> results = new ArrayList<ServiceURL>();
 
         // call discovery for single attribute
-        System.out.println("Calling discover for filterspec " + cluster);
+        logger.info("Calling discover for filterspec " + cluster);
         try (final ServicesQueue servicesQueue = discover(cluster)) {
             ServiceURL serviceURL = servicesQueue.takeService();
             do {
-                System.out.println("ServiceURL found = " + serviceURL);
+                logger.info("ServiceURL found = " + serviceURL);
                 results.add(serviceURL);
 
                 serviceURL = servicesQueue.takeService();
@@ -182,11 +185,11 @@ public final class FilterSpecTestCase {
         List<ServiceURL> results = new ArrayList<ServiceURL>();
 
         // call discovery for single attribute
-        System.out.println("Calling discover for filterspec " + all);
+        logger.info("Calling discover for filterspec " + all);
         try (final ServicesQueue servicesQueue = discover(all)) {
             ServiceURL serviceURL = servicesQueue.takeService();
             do {
-                System.out.println("ServiceURL found = " + serviceURL);
+                logger.info("ServiceURL found = " + serviceURL);
                 results.add(serviceURL);
 
                 serviceURL = servicesQueue.takeService();

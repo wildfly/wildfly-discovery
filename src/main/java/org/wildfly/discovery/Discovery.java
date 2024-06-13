@@ -225,6 +225,15 @@ public final class Discovery implements Contextual<Discovery> {
             this(queue, problems, request, Long.MAX_VALUE, TimeUnit.DAYS);
         }
 
+        /**
+         * Create a BlockingQueueServicesQueue which makes use of a default timeout value for all calls to takeService()
+         *
+         * @param queue     the underlying BlockingQueue used to store ServiceURLs
+         * @param problems  the underlying List used to store Throwables encountered by the DiscoveryProvider while generating ServiceURLs
+         * @param request   a DiscoveryRequest instance used for cancellation of the Discovery call
+         * @param time      a default timeout value for calls to takeService()
+         * @param timeUnit  the timout TimeUnit
+         */
         BlockingQueueServicesQueue(final LinkedBlockingQueue<ServiceURL> queue, final CopyOnWriteArrayList<Throwable> problems, final DiscoveryRequest request, final long time, final TimeUnit timeUnit) {
             this.queue = queue;
             this.problems = problems;
@@ -275,13 +284,33 @@ public final class Discovery implements Contextual<Discovery> {
             }
         }
 
+        /**
+         * Take a ServiceURL from the queue, using the timeout value specified in the constructor.
+         *
+         * @return  the next ServiceURL in the queue (or null if the call times out)
+         * @throws InterruptedException
+         */
         public ServiceURL takeService() throws InterruptedException {
-            await();
+            // timeout <= 0 interpreted as block indefinitely
+            if (this.timeout <= 0) {
+                await(Long.MAX_VALUE, this.timeUnit);
+            } else {
+                await(this.timeout, this.timeUnit);
+            }
             return pollService();
         }
 
+        /**
+         * Take a ServiceURL from the queue, using the timeout value specified in te method call.
+         *
+         * @param timeout
+         * @param timeUnit
+         * @return the next ServiceURL in the queue (or null if the call times out)
+         * @throws InterruptedException
+         */
         @Override
         public ServiceURL takeService(long timeout, TimeUnit timeUnit) throws InterruptedException {
+            // timeout <= interpreted as block indefinitely
             if (timeout <= 0) timeout = Long.MAX_VALUE;
             await(timeout, timeUnit);
             return pollService();
@@ -291,6 +320,9 @@ public final class Discovery implements Contextual<Discovery> {
             return next == null && done;
         }
 
+        /**
+         * Close the queue, cancelling the ongoing request if required.
+         */
         public void close() {
         }
 
